@@ -12,6 +12,7 @@ export type RpmFillDirection = "left-to-right" | "edge-to-center";
 export interface RpmBarProps {
   rpm?: number | null;
   redline?: number;
+  minRpm?: number;
   segments?: number;
   zones?: RpmZone[];
   fillDirection?: RpmFillDirection;
@@ -37,6 +38,7 @@ function colorForProgress(progress: number, zones: RpmZone[]): string {
 export function RpmBar({
   rpm,
   redline = 8000,
+  minRpm = 0,
   segments = 16,
   zones = DEFAULT_ZONES,
   fillDirection = "left-to-right",
@@ -45,7 +47,10 @@ export function RpmBar({
   mode = "display",
 }: RpmBarProps) {
   const safeSegments = Math.max(1, Math.floor(segments));
-  const progress = rpm == null || redline <= 0 ? 0 : clamp(rpm / redline, 0, 1);
+  const usableRange = redline - minRpm;
+  const progress = rpm == null || usableRange <= 0 || rpm <= minRpm
+    ? 0
+    : clamp((rpm - minRpm) / usableRange, 0, 1);
   const filledSegments = Math.ceil(progress * safeSegments);
   const atRedline = progress >= 1;
   const cssVars = {

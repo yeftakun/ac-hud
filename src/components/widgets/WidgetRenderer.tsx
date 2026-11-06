@@ -185,17 +185,19 @@ export function WidgetRenderer({ widget, mode = "display" }: WidgetRendererProps
             return [{ upTo: zone.upTo, color: zone.color }];
           })
         : [];
-      const redlineValue =
-        typeof payload.redline === "number"
-          ? payload.redline
-          : typeof payload.redlineDataKey === "string"
-            ? getValue(payload.redlineDataKey)
-            : getValue("redline");
+      const defaultRedline = payload.useDefaultRedline !== false;
+      const sourceRedlineValue = typeof payload.redlineDataKey === "string"
+        ? getValue(payload.redlineDataKey)
+        : getValue("redline");
+      const redlineValue = defaultRedline
+        ? sourceRedlineValue
+        : payload.redline;
 
       return (
         <RpmBar
           rpm={typeof value === "number" ? value : undefined}
           redline={typeof redlineValue === "number" ? redlineValue : undefined}
+          minRpm={typeof payload.minRpm === "number" ? payload.minRpm : undefined}
           segments={typeof payload.segments === "number" ? payload.segments : undefined}
           zones={configuredZones.length > 0 ? configuredZones : undefined}
           fillDirection="left-to-right"

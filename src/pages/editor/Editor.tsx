@@ -36,19 +36,21 @@ interface NumericFieldProps {
   min: number;
   max: number;
   step?: number;
+  disabled?: boolean;
   onChange: (value: string) => void;
 }
 
-function NumericField({ value, min, max, step = 1, onChange }: NumericFieldProps) {
+function NumericField({ value, min, max, step = 1, disabled = false, onChange }: NumericFieldProps) {
   function changeBy(amount: number) {
+    if (disabled) return;
     onChange(String(Math.min(max, Math.max(min, value + amount))));
   }
 
   return (
     <span className="editor-number-field">
-      <button type="button" className="editor-number-field__button" onClick={() => changeBy(-step)} aria-label="Decrease value">‹</button>
-      <input type="number" min={min} max={max} step={step} value={value} onChange={(event) => onChange(event.target.value)} />
-      <button type="button" className="editor-number-field__button" onClick={() => changeBy(step)} aria-label="Increase value">›</button>
+      <button type="button" className="editor-number-field__button" onClick={() => changeBy(-step)} aria-label="Decrease value" disabled={disabled}>‹</button>
+      <input type="number" min={min} max={max} step={step} value={value} onChange={(event) => onChange(event.target.value)} disabled={disabled} />
+      <button type="button" className="editor-number-field__button" onClick={() => changeBy(step)} aria-label="Increase value" disabled={disabled}>›</button>
     </span>
   );
 }
@@ -225,6 +227,9 @@ function createWidget(preset: WidgetPreset, widgets: WidgetConfig[]): WidgetConf
     payload = {
       dataKey,
       redlineDataKey: "redline",
+      useDefaultRedline: true,
+      redline: 8000,
+      minRpm: 0,
       style: "lamp",
       fillDirection: "edge-to-center",
       segments: 16,
@@ -405,6 +410,22 @@ export function Editor() {
     if (!Number.isFinite(redline) || redline < 1000 || redline > 20000) return;
     updateWidget(selectedWidget.id, {
       payload: { ...selectedWidget.payload, redline },
+    });
+  }
+
+  function updateSelectedRpmDefault(value: boolean) {
+    if (!selectedWidget || selectedWidget.type !== "rpm-bar") return;
+    updateWidget(selectedWidget.id, {
+      payload: { ...selectedWidget.payload, useDefaultRedline: value },
+    });
+  }
+
+  function updateSelectedRpmMin(value: string) {
+    if (!selectedWidget || selectedWidget.type !== "rpm-bar") return;
+    const minRpm = Number(value);
+    if (!Number.isFinite(minRpm) || minRpm < 0 || minRpm > 20000) return;
+    updateWidget(selectedWidget.id, {
+      payload: { ...selectedWidget.payload, minRpm },
     });
   }
 
@@ -789,17 +810,39 @@ export function Editor() {
               ) : null}
 
               {selectedWidget.type === "rpm-bar" ? (
-                <label style={fieldStyle}>
-                  RPM limit / redline
-                  <NumericField
-                    min={1000}
-                    max={20000}
-                    step={100}
-                    value={typeof selectedPayload.redline === "number" ? selectedPayload.redline : 8000}
-                    onChange={updateSelectedRpmRedline}
-                  />
-                  <span style={fieldHintStyle}>100% bar tercapai pada nilai RPM ini.</span>
-                </label>
+                <>
+                  <label style={{ ...fieldStyle, flexDirection: "row", alignItems: "center", gap: 8 }}>
+                    <input
+                      type="checkbox"
+                      checked={selectedPayload.useDefaultRedline !== false}
+                      onChange={(event) => updateSelectedRpmDefault(event.target.checked)}
+                    />
+                    Default redline dari source
+                  </label>
+                  <label style={fieldStyle}>
+                    Custom RPM limit / redline
+                    <NumericField
+                      min={1000}
+                      max={20000}
+                      step={100}
+                      value={typeof selectedPayload.redline === "number" ? selectedPayload.redline : 8000}
+                      disabled={selectedPayload.useDefaultRedline !== false}
+                      onChange={updateSelectedRpmRedline}
+                    />
+                    <span style={fieldHintStyle}>Aktif saat Default dimatikan; 100% bar tercapai pada RPM ini.</span>
+                  </label>
+                  <label style={fieldStyle}>
+                    Lower RPM limit
+                    <NumericField
+                      min={0}
+                      max={20000}
+                      step={100}
+                      value={typeof selectedPayload.minRpm === "number" ? selectedPayload.minRpm : 0}
+                      onChange={updateSelectedRpmMin}
+                    />
+                    <span style={fieldHintStyle}>Lampu tetap mati sampai RPM melewati nilai ini.</span>
+                  </label>
+                </>
               ) : null}
 
               {defaultValueFontSize(selectedWidget.type) !== null ? (
