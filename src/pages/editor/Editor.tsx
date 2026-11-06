@@ -92,20 +92,67 @@ const ADDABLE_WIDGET_TYPES = [
 
 type AddableWidgetType = (typeof ADDABLE_WIDGET_TYPES)[number];
 
-const DEFAULT_DATA_KEYS: Record<AddableWidgetType, string> = {
-  "stat-box": "lap.best",
-  "stat-group": "engine.oilTemp",
-  "raw-value": "speed",
-  "pedal-bar": "throttle",
-  "steering-wheel": "steering",
-  "kers-bar": "kers.charge",
-  "tyre-wear-bar": "tyres.FL.wear",
-  gforce: "gforce.x",
-  drs: "drs.active",
-  "rpm-bar": "rpm",
-  "activation-lights": "pit.active",
-  tyres: "tyres.FL.psi",
-};
+interface WidgetPreset {
+  dataKey: string;
+  type: AddableWidgetType;
+  displayKey?: string;
+}
+
+// The picker is data-first: every telemetry source has a ready-to-add card.
+// Composite widgets use a descriptive dataKey label and configure all of their
+// related sources in createWidget below.
+const WIDGET_LIBRARY: WidgetPreset[] = [
+  { dataKey: "speed", type: "raw-value" },
+  { dataKey: "gear", type: "raw-value" },
+  { dataKey: "rpm", type: "rpm-bar" },
+  { dataKey: "redline", type: "stat-box" },
+  { dataKey: "throttle", type: "pedal-bar" },
+  { dataKey: "brake", type: "pedal-bar" },
+  { dataKey: "clutch", type: "pedal-bar" },
+  { dataKey: "steering", type: "steering-wheel" },
+  { dataKey: "delta", type: "raw-value" },
+  { dataKey: "lap.counter", type: "stat-box" },
+  { dataKey: "lap.current", type: "stat-box" },
+  { dataKey: "lap.best", type: "stat-box" },
+  { dataKey: "lap.last", type: "stat-box" },
+  { dataKey: "lap.est", type: "stat-box" },
+  { dataKey: "position", type: "stat-box" },
+  { dataKey: "fuel", type: "stat-box" },
+  { dataKey: "abs", type: "stat-box" },
+  { dataKey: "tc", type: "stat-box" },
+  { dataKey: "bb", type: "stat-box" },
+  { dataKey: "drs.active", type: "drs", displayKey: "drs.available / drs.enabled / drs.active" },
+  { dataKey: "pit.active", type: "activation-lights", displayKey: "abs.active / tc.active / pit.active" },
+  { dataKey: "kers.charge", type: "kers-bar", displayKey: "kers.charge / kers.input" },
+  { dataKey: "turbo.boost", type: "stat-box" },
+  { dataKey: "engine.brake", type: "stat-box" },
+  { dataKey: "engine.oilTemp", type: "stat-group", displayKey: "engine.oilTemp + engine.waterTemp" },
+  { dataKey: "engine.oilTemp", type: "stat-box" },
+  { dataKey: "engine.oilPressure", type: "stat-box" },
+  { dataKey: "engine.waterTemp", type: "stat-box" },
+  { dataKey: "engine.waterPressure", type: "stat-box" },
+  { dataKey: "tyres.FL.psi", type: "tyres", displayKey: "tyres.FL/FR/RL/RR psi + temp" },
+  { dataKey: "tyres.FL.psi", type: "stat-box" },
+  { dataKey: "tyres.FL.temp", type: "stat-box" },
+  { dataKey: "tyres.FL.wear", type: "tyre-wear-bar" },
+  { dataKey: "tyres.FR.psi", type: "stat-box" },
+  { dataKey: "tyres.FR.temp", type: "stat-box" },
+  { dataKey: "tyres.FR.wear", type: "tyre-wear-bar" },
+  { dataKey: "tyres.RL.psi", type: "stat-box" },
+  { dataKey: "tyres.RL.temp", type: "stat-box" },
+  { dataKey: "tyres.RL.wear", type: "tyre-wear-bar" },
+  { dataKey: "tyres.RR.psi", type: "stat-box" },
+  { dataKey: "tyres.RR.temp", type: "stat-box" },
+  { dataKey: "tyres.RR.wear", type: "tyre-wear-bar" },
+  { dataKey: "tyres.out", type: "stat-box" },
+  { dataKey: "gforce.x", type: "gforce", displayKey: "gforce.x + gforce.y" },
+  { dataKey: "gforce.x", type: "stat-box" },
+  { dataKey: "gforce.y", type: "stat-box" },
+  { dataKey: "gforce.z", type: "stat-box" },
+  { dataKey: "air.temp", type: "stat-box" },
+  { dataKey: "road.temp", type: "stat-box" },
+  { dataKey: "car.ai", type: "stat-box" },
+];
 
 function round(value: number): number {
   return Math.round(value);
@@ -131,7 +178,8 @@ function findOpenPosition(widgets: WidgetConfig[], w: number, h: number) {
   return { x: 20, y: 20 };
 }
 
-function createWidget(type: AddableWidgetType, dataKey: string, widgets: WidgetConfig[]): WidgetConfig {
+function createWidget(preset: WidgetPreset, widgets: WidgetConfig[]): WidgetConfig {
+  const { type } = preset;
   const dimensions: Record<AddableWidgetType, { w: number; h: number }> = {
     "stat-box": { w: 180, h: 70 },
     "stat-group": { w: 240, h: 150 },
@@ -148,13 +196,22 @@ function createWidget(type: AddableWidgetType, dataKey: string, widgets: WidgetC
   };
   const { w, h } = dimensions[type];
   const position = findOpenPosition(widgets, w, h);
-  const id = `w_${type.replaceAll("-", "_")}_${crypto.randomUUID().slice(0, 8)}`;
+  const randomId = typeof globalThis.crypto?.randomUUID === "function"
+    ? globalThis.crypto.randomUUID().slice(0, 8)
+    : `${Date.now().toString(36)}${Math.random().toString(36).slice(2, 8)}`;
+  const id = `w_${type.replaceAll("-", "_")}_${randomId}`;
   const style = { ...STYLE_DEFAULTS };
+  const dataKey = preset.dataKey;
 
   let payload: Record<string, unknown> = { dataKey };
   if (type === "stat-box") payload = { dataKey, label: "NEW STAT", decimals: 2 };
   if (type === "stat-group") {
-    payload = { rows: [{ dataKey, label: "NEW VALUE" }] };
+    payload = {
+      rows: [
+        { dataKey: "engine.oilTemp", label: "OIL TEMP", unit: "°C" },
+        { dataKey: "engine.waterTemp", label: "WATER TEMP", unit: "°C" },
+      ],
+    };
   }
   if (type === "raw-value") payload = { dataKey, fontSize: 48 };
   if (type === "pedal-bar") payload = { dataKey, label: "THROTTLE", color: "#2ee66b", max: 100 };
@@ -182,7 +239,7 @@ function createWidget(type: AddableWidgetType, dataKey: string, widgets: WidgetC
       lampCount: 4,
       priority: ["abs", "tc", "pit"],
       states: {
-        pit: { dataKey, color: "#ffd400", blink: true, blinkMs: 400 },
+        pit: { dataKey: "pit.active", color: "#ffd400", blink: true, blinkMs: 400 },
         abs: { dataKey: "abs.active", color: "#ff3b30", blink: false },
         tc: { dataKey: "tc.active", color: "#a855f7", blink: false },
       },
@@ -230,8 +287,7 @@ export function Editor() {
   const [saveState, setSaveState] = useState<"idle" | "saving" | "saved" | "error">("idle");
   const [isAddPickerOpen, setIsAddPickerOpen] = useState(false);
   const [isGlobalPropertiesOpen, setIsGlobalPropertiesOpen] = useState(true);
-  const [newWidgetType, setNewWidgetType] = useState<AddableWidgetType>("stat-box");
-  const [newWidgetDataKey, setNewWidgetDataKey] = useState(DEFAULT_DATA_KEYS["stat-box"]);
+  const [newWidgetPreset, setNewWidgetPreset] = useState<WidgetPreset>(WIDGET_LIBRARY[0]);
   const [importMessage, setImportMessage] = useState<string | null>(null);
   const importInputRef = useRef<HTMLInputElement>(null);
   const elementRefs = useRef<Record<string, HTMLElement | null>>({});
@@ -366,7 +422,7 @@ export function Editor() {
   function addWidget() {
     setProfile((current) => {
       if (!current) return current;
-      const widget = createWidget(newWidgetType, newWidgetDataKey.trim(), current.widgets);
+      const widget = createWidget(newWidgetPreset, current.widgets);
       return { ...current, widgets: [...current.widgets, widget] };
     });
     setIsAddPickerOpen(false);
@@ -522,24 +578,20 @@ export function Editor() {
               <div><span style={editorEyebrowStyle}>WIDGET LIBRARY</span><h2 id="add-widget-title" style={{ margin: "6px 0 0" }}>Add widget</h2></div>
               <button type="button" style={closeButtonStyle} onClick={() => setIsAddPickerOpen(false)} aria-label="Close">×</button>
             </div>
-            <p style={mutedStyle}>Pilih jenis widget, lalu tentukan data key awal. Semua perubahan masih lokal sampai Save ditekan.</p>
+            <p style={mutedStyle}>Pilih sumber data atau objek dari kartu. Setiap kartu sudah memasangkan data source dengan widget yang sesuai; detailnya tetap bisa disesuaikan setelah widget dipilih di canvas.</p>
             <div style={typeGridStyle}>
-              {ADDABLE_WIDGET_TYPES.map((type) => (
+              {WIDGET_LIBRARY.map((preset) => (
                 <button
-                  key={type}
+                  key={`${preset.displayKey ?? preset.dataKey}-${preset.type}`}
                   type="button"
-                  style={typeCardStyle(newWidgetType === type)}
-                  onClick={() => { setNewWidgetType(type); setNewWidgetDataKey(DEFAULT_DATA_KEYS[type]); }}
+                  style={typeCardStyle(newWidgetPreset === preset)}
+                  onClick={() => setNewWidgetPreset(preset)}
                 >
-                  <strong>{type}</strong>
-                  <small>{DEFAULT_DATA_KEYS[type]}</small>
+                  <strong>{preset.displayKey ?? preset.dataKey}</strong>
+                  <small>{preset.type}</small>
                 </button>
               ))}
             </div>
-            <label style={fieldStyle}>
-              Initial dataKey
-              <input autoFocus value={newWidgetDataKey} onChange={(event) => setNewWidgetDataKey(event.target.value)} placeholder="e.g. rpm" />
-            </label>
             <div style={modalFooterStyle}>
               <button type="button" style={quietButtonStyle} onClick={() => setIsAddPickerOpen(false)}>Cancel</button>
               <button type="button" style={primaryButtonStyle} onClick={addWidget}>Add to canvas</button>
@@ -607,18 +659,19 @@ export function Editor() {
             target={selectedElement}
             container={canvasRef.current}
             origin={false}
+            zoom={canvasScale}
             draggable
             resizable
             keepRatio={false}
             renderDirections={["nw", "n", "ne", "w", "e", "sw", "s", "se"]}
             onDragStart={beginTransaction}
             onDrag={({ left, top }) => {
-              if (selectedId) updateWidget(selectedId, { x: round(left / canvasScale), y: round(top / canvasScale) }, true);
+              if (selectedId) updateWidget(selectedId, { x: round(left), y: round(top) }, true);
             }}
             onDragEnd={commitTransaction}
             onResizeStart={beginTransaction}
             onResize={({ width, height }) => {
-              if (selectedId) updateWidget(selectedId, { w: round(width / canvasScale), h: round(height / canvasScale) }, true);
+              if (selectedId) updateWidget(selectedId, { w: round(width), h: round(height) }, true);
             }}
             onResizeEnd={commitTransaction}
           />
