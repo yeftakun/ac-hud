@@ -72,8 +72,8 @@ Supaya transisi ke WebSocket nanti gak perlu nyentuh widget sama sekali, data wa
 - Oil temp, Oil pressure, Water temp, Water pressure (cluster dalam satu `stat-group`)
 - Tyres (PSI besar + suhu kecil, widget khusus)
 
-**Hidden overlay** (kondisional, menimpa tampilan utama saat trigger aktif — belum di-detail skema widget-nya, lihat §9 Open Items):
-- Pit limiter, flag indicator, setup change notification, dll.
+**Hidden overlay** (kondisional, menimpa tampilan utama saat trigger aktif — widget `overlay-event`, skema di §5.3):
+- Pit limiter (sudah ada `dataKey`: `pit.active`), flag indicator, setup change notification, dll. (daftar lengkap di luar pit limiter masih open — lihat §9)
 
 ## 5. Widget System
 
@@ -188,6 +188,33 @@ Supaya transisi ke WebSocket nanti gak perlu nyentuh widget sama sekali, data wa
 - Background tiap kuadran dihitung on-the-fly dari suhu vs threshold: di bawah `cold` = biru, `cold`–`optimal` = hijau, `optimal`–`hot` = kuning, di atas `hot` = merah (overheat). Logic di komponen, bukan style statis dari config.
 - Angka threshold di atas contoh — disesuaikan lagi per compound ban nanti.
 
+**`overlay-event`** — hidden overlay (pit limiter, flag, notifikasi setup change, dll.), pakai envelope §5.2 yang sama, cuma visibility-nya data-driven
+```json
+{
+  "id": "ov_pit_limiter",
+  "type": "overlay-event",
+  "x": 0, "y": 400, "w": 960, "h": 140,
+  "zIndex": 100,
+  "style": { "boxBg": "rgba(0,0,0,0.85)", "valueColor": "#ffd400" },
+  "payload": {
+    "triggerKey": "pit.active",
+    "triggerWhen": true,
+    "label": "PIT LIMITER",
+    "coverage": "partial",
+    "persistWhileActive": true,
+    "autoDismissMs": null,
+    "transition": "fade",
+    "transitionMs": 250
+  }
+}
+```
+- `triggerKey` + `triggerWhen`: dataKey (boolean) dan nilai yang dianggap "aktif" — overlay cuma dirender saat kondisi ini terpenuhi, selain itu tidak ada di DOM sama sekali (bukan sekadar disembunyikan via CSS).
+- `coverage`: `"full"` (menimpa seluruh canvas 960×540, `x/y/w/h` diabaikan) atau `"partial"` (cuma area `x/y/w/h` milik widget ini sendiri).
+- `persistWhileActive`: `true` → overlay tampil selama `triggerKey` masih `triggerWhen`, hilang begitu kondisinya berubah (cocok untuk status seperti PIT LIMITER atau flag). `false` → overlay muncul sekali lalu auto-dismiss setelah `autoDismissMs`, walau `triggerKey` masih aktif (cocok untuk notifikasi toast seperti perubahan setup).
+- `transition` / `transitionMs`: fade in/out saat overlay muncul/hilang.
+- **Prioritas antar overlay yang aktif bersamaan**: pakai `zIndex` yang sudah ada di envelope §5.2 — tidak perlu field baru, konsisten dengan widget lain. Overlay dengan `zIndex` lebih tinggi dirender di atas.
+- Daftar event di luar PIT LIMITER (flag, setup change notif, dll.) masih open — lihat §9.
+
 ### 5.4 Prinsip Kontrak Config
 
 - `dataKey` pakai dot-notation flat (`"engine.oilTemp"`) → resolve tinggal `telemetry[dataKey]`, tanpa path parser.
@@ -197,11 +224,20 @@ Supaya transisi ke WebSocket nanti gak perlu nyentuh widget sama sekali, data wa
 
 - Tiap widget adalah komponen dengan prop `mode: "edit" | "display"`.
 - Mode `edit`: tampilkan handle drag (`react-moveable`) + resize handle, panel properti (warna box/border/label/value, pilih `dataKey` untuk binding).
-- Simpan via `POST /configs` ke config API.
+- Simpan via `POST /configs` (profile baru) atau `PUT /configs/:id` (update) ke config API.
+
+### 6.1 Widget CRUD (Tambah/Hapus)
+
+Ini bagian dari requirement awal ("informasi bisa ditambah/dikurangi") yang sempat di-skip di Prompt 6 (MVP1 baru bisa edit widget yang sudah ada).
+
+- **Tambah widget**: tombol "Add Widget" → picker pilih `type` (stat-box, stat-group, raw-value, drs, rpm-bar, activation-lights, tyres, overlay-event) dan `dataKey` awal. Widget baru masuk ke canvas dengan `x,y,w,h` default (posisi aman yang gak nimpa widget lain — mis. selalu taruh di titik tengah-atas canvas yang masih kosong, atau sekadar offset dari widget terakhir ditambahkan) dan style default dari §5.2.
+- **Hapus widget**: pilih widget → tombol "Delete" (atau tombol `Delete` keyboard) → hilang dari array `widgets` di state lokal, baru permanen setelah "Save".
+- Validasi dasar: gak boleh dua widget punya `id` sama (generate `id` otomatis, bukan user-input).
 
 ## 7. HP Display Mode
 
 - Komponen sama, `mode: "display"` → render read-only, binding ke data WebSocket live via `dataKey`.
+- Widget `overlay-event` dirender di atas (pakai `zIndex` tinggi) hanya saat `triggerKey`-nya aktif — lihat §5.3.
 - Load config lewat `GET /configs/:id` (pilih profile aktif).
 - PWA: manifest + service worker untuk Add to Home Screen, fullscreen tanpa address bar.
 - Wake Lock API supaya layar tidak auto-sleep saat dipasang di cockpit/rig.
@@ -218,14 +254,18 @@ Supaya transisi ke WebSocket nanti gak perlu nyentuh widget sama sekali, data wa
 6. Desktop editor: integrasikan `react-moveable`, panel properti, save ke config API
 7. HP shell: PWA manifest, Wake Lock, orientation lock, pemilihan profile
 
+8. Bugfix seed (Prompt 8-9, sudah selesai): lengkapi 1 widget per type, perbaiki `activation-lights` resolve dari `dataKey` khusus
+
+**Penyempurnaan Frontend (lanjutan MVP1, sebelum backend masuk):**
+9. Lengkapi seed `profile_001` — 1 widget per field `capture.json` yang masih kosong (gear, delta, lap.counter/last/est, position, fuel, abs, tc, bb)
+10. Widget CRUD di editor (§6.1) — tambah/hapus widget dari canvas
+11. Implementasi `overlay-event` (§5.3) — renderer overlay yang nimpa canvas, mulai dari PIT LIMITER (`dataKey` sudah ada: `pit.active`)
+
 **Final (backend masuk):**
-8. Capture layer → WebSocket server
-9. Ganti provider di balik `useTelemetry()` dari `capture.json` ke WebSocket — widget tidak berubah
-10. Hidden overlay system (lihat Open Items)
+12. Capture layer → WebSocket server
+13. Ganti provider di balik `useTelemetry()` dari `capture.json` ke WebSocket — widget tidak berubah
 
 ## 9. Open Items / Belum Diputuskan
 
-- **Hidden overlay**: sudah disepakati bentuknya *menimpa* tampilan utama (bukan slot statis terpisah), tapi skema widget untuk kategori ini (area yang ketutup, durasi/transisi per event, prioritas antar overlay) belum di-breakdown — perlu sesi terpisah.
-- **Daftar lengkap event hidden overlay** (pit limiter, flag, setup change notif, dll.) belum di-final-kan item per item.
-- Seed `profile_001` baru punya 1 widget representatif per type (hasil Prompt 8) — field lain di `capture.json` (gear, delta, lap.counter/last/est, position, fuel, abs, tc, bb) belum punya widget sendiri.
+- **Daftar lengkap event hidden overlay** di luar PIT LIMITER (flag, setup change notif, dll.) belum di-final-kan item per item — skema `overlay-event`-nya sendiri sudah general, tinggal nambah instance baru begitu event-nya diputuskan.
 - Threshold suhu ban di §5.3 masih contoh, perlu disesuaikan ke compound ban yang dipakai.
