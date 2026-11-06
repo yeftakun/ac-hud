@@ -133,6 +133,100 @@
   text-align: center;
 }
 
+/* ---- DRS ---- */
+
+.drs-widget {
+  padding: 0;
+  transition: background-color 0.2s ease;
+}
+
+.drs-widget__label {
+  color: var(--value-color, #ffffff);
+  font-size: 24px;
+  font-weight: 900;
+  letter-spacing: 2px;
+}
+
+/* ---- RPM bar ---- */
+
+.rpm-bar {
+  display: flex;
+  align-items: center;
+  width: 100%;
+  height: 100%;
+  box-sizing: border-box;
+}
+
+.rpm-bar__segments {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  width: 100%;
+  height: 100%;
+}
+
+.rpm-bar__segment {
+  flex: 1 1 0;
+  min-width: 0;
+  height: 42%;
+  border: 1px solid var(--box-border, #2a3340);
+  border-radius: 999px;
+  background: var(--box-bg, #141820);
+  box-sizing: border-box;
+  transition: background-color 0.15s ease, box-shadow 0.15s ease;
+}
+
+.rpm-bar__segment--filled {
+  border-color: transparent;
+  box-shadow: 0 0 8px color-mix(in srgb, currentColor 35%, transparent);
+}
+
+/* ---- Activation lights ---- */
+
+.activation-lights {
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  width: 100%;
+  height: 100%;
+  padding: 6px;
+  box-sizing: border-box;
+  border: 2px solid var(--box-border, #2a3340);
+  border-radius: 10px;
+  background: var(--box-bg, #141820);
+}
+
+.activation-lights__lamp {
+  display: block;
+  flex: 1 1 0;
+  min-height: 0;
+  margin: 2px 0;
+  border-radius: 999px;
+  background: var(--lamp-color, #2a3340);
+  opacity: 0.28;
+  transition: background-color 0.15s ease, opacity 0.15s ease;
+}
+
+.activation-lights__lamp--blink {
+  animation: activation-lights-blink var(--blink-ms, 400ms) ease-in-out infinite;
+}
+
+.activation-lights__lamp--active {
+  opacity: 1;
+  box-shadow: 0 0 10px var(--lamp-color, #2a3340);
+}
+
+@keyframes activation-lights-blink {
+  0%,
+  100% {
+    opacity: 1;
+  }
+
+  50% {
+    opacity: 0.25;
+  }
+}
+
 /* ---- Tyres widget ---- */
 
 .tyres-widget {

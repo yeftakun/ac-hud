@@ -2,6 +2,7 @@
   "speed": 180,
   "gear": 4,
   "rpm": 4500,
+  "redline": 8000,
   "delta": -0.342,
   "lap.counter": 12,
   "lap.best": 98.456,
@@ -24,5 +25,6 @@
   "tyres.RL.temp": 86,
   "tyres.RR.psi": 27.1,
   "tyres.RR.temp": 89,
-  "drs.active": true
+  "drs.active": true,
+  "pit.active": false
 }

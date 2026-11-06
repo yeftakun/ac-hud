@@ -2,7 +2,7 @@ import type { CSSProperties } from "react";
 import type { StatBoxStyle } from "./StatBox";
 import "./hud-widgets.css";
 
-type Corner = "FL" | "FR" | "RL" | "RR";
+export type Corner = "FL" | "FR" | "RL" | "RR";
 
 export interface TyreReading {
   psi?: number | null;

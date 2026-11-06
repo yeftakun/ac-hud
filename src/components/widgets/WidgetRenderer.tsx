@@ -1,8 +1,12 @@
 import type { CSSProperties } from "react";
 import { useTelemetry } from "../../hooks/useTelemetry";
+import { ActivationLights, type ActivationState } from "./ActivationLights";
+import { Drs } from "./Drs";
 import { RawValue } from "./RawValue";
+import { RpmBar, type RpmZone } from "./RpmBar";
 import { StatBox, type StatBoxStyle } from "./StatBox";
 import { StatGroup, type StatGroupRow } from "./StatGroup";
+import { TyresWidget, type Corner, type TyreReading, type TyreThresholds } from "./TyresWidget";
 import "./hud-widgets.css";
 
 export type WidgetValue = string | number | boolean | null;
@@ -29,6 +33,10 @@ function valueFor(
 ): WidgetValue | undefined {
   const dataKey = payload.dataKey;
   return typeof dataKey === "string" ? getValue(dataKey) : undefined;
+}
+
+function isRecord(value: unknown): value is Record<string, unknown> {
+  return typeof value === "object" && value !== null && !Array.isArray(value);
 }
 
 export function WidgetRenderer({ widget }: WidgetRendererProps) {
@@ -79,6 +87,113 @@ export function WidgetRenderer({ widget }: WidgetRendererProps) {
           style={widget.style}
         />
       );
+
+    case "drs":
+      return (
+        <Drs
+          active={Boolean(value)}
+          activeColor={typeof payload.activeColor === "string" ? payload.activeColor : undefined}
+          inactiveColor={typeof payload.inactiveColor === "string" ? payload.inactiveColor : undefined}
+          label={typeof payload.label === "string" ? payload.label : undefined}
+          style={widget.style}
+        />
+      );
+
+    case "rpm-bar": {
+      const configuredZones: RpmZone[] = Array.isArray(payload.zones)
+        ? payload.zones.flatMap((zone) => {
+            if (!isRecord(zone) || typeof zone.color !== "string" || typeof zone.upTo !== "number") return [];
+            return [{ upTo: zone.upTo, color: zone.color }];
+          })
+        : [];
+      const redlineValue =
+        typeof payload.redline === "number"
+          ? payload.redline
+          : typeof payload.redlineDataKey === "string"
+            ? getValue(payload.redlineDataKey)
+            : getValue("redline");
+
+      return (
+        <RpmBar
+          rpm={typeof value === "number" ? value : undefined}
+          redline={typeof redlineValue === "number" ? redlineValue : undefined}
+          segments={typeof payload.segments === "number" ? payload.segments : undefined}
+          zones={configuredZones.length > 0 ? configuredZones : undefined}
+          fillDirection={payload.fillDirection === "left-to-right" ? "left-to-right" : "edge-to-center"}
+          style={widget.style}
+        />
+      );
+    }
+
+    case "activation-lights": {
+      const configuredStates: Record<string, ActivationState> = {};
+      if (isRecord(payload.states)) {
+        for (const [stateName, stateValue] of Object.entries(payload.states)) {
+          if (!isRecord(stateValue) || typeof stateValue.color !== "string") continue;
+          configuredStates[stateName] = {
+            color: stateValue.color,
+            blink: stateValue.blink === true,
+            blinkMs: typeof stateValue.blinkMs === "number" ? stateValue.blinkMs : undefined,
+            dataKey: typeof stateValue.dataKey === "string" ? stateValue.dataKey : undefined,
+          };
+        }
+      }
+
+      const activeStates: Record<string, boolean> = {};
+      for (const [stateName, stateConfig] of Object.entries(configuredStates)) {
+        const dataKey = stateConfig.dataKey ?? (stateName === "pit" ? "pit.active" : stateName);
+        activeStates[stateName] = Boolean(getValue(dataKey));
+      }
+
+      const priority = Array.isArray(payload.priority)
+        ? payload.priority.filter((stateName): stateName is string => typeof stateName === "string")
+        : [];
+
+      return (
+        <ActivationLights
+          lampCount={typeof payload.lampCount === "number" ? payload.lampCount : undefined}
+          priority={priority}
+          states={configuredStates}
+          activeStates={activeStates}
+          style={widget.style}
+        />
+      );
+    }
+
+    case "tyres": {
+      const corners: Corner[] = ["FL", "FR", "RL", "RR"];
+      const data = Object.fromEntries(
+        corners.map((corner) => {
+          const cornerConfig = isRecord(payload.dataKeys) && isRecord(payload.dataKeys[corner])
+            ? payload.dataKeys[corner]
+            : {};
+          const psiKey = cornerConfig.psi;
+          const tempKey = cornerConfig.temp;
+          const psi = typeof psiKey === "string" ? getValue(psiKey) : undefined;
+          const temp = typeof tempKey === "string" ? getValue(tempKey) : undefined;
+          const reading: TyreReading = {
+            psi: typeof psi === "number" ? psi : undefined,
+            temp: typeof temp === "number" ? temp : undefined,
+          };
+          return [corner, reading];
+        }),
+      ) as Record<Corner, TyreReading>;
+
+      const thresholdConfig = isRecord(payload.tempThresholds) ? payload.tempThresholds : undefined;
+      const thresholds: TyreThresholds | undefined =
+        thresholdConfig &&
+        typeof thresholdConfig.cold === "number" &&
+        typeof thresholdConfig.optimal === "number" &&
+        typeof thresholdConfig.hot === "number"
+          ? {
+              cold: thresholdConfig.cold,
+              optimal: thresholdConfig.optimal,
+              hot: thresholdConfig.hot,
+            }
+          : undefined;
+
+      return <TyresWidget data={data} thresholds={thresholds} style={widget.style} />;
+    }
 
     default:
       return (
