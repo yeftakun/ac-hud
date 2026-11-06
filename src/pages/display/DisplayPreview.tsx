@@ -1,5 +1,5 @@
 import type { CSSProperties } from "react";
-import { WidgetRenderer, type WidgetConfig, type WidgetValues } from "../../components/widgets/WidgetRenderer";
+import { WidgetRenderer, type WidgetConfig } from "../../components/widgets/WidgetRenderer";
 
 const previewWidgets: WidgetConfig[] = [
   {
@@ -55,16 +55,6 @@ const previewWidgets: WidgetConfig[] = [
   },
 ];
 
-const previewValues: WidgetValues = {
-  "lap.best": 98.456,
-  "engine.oilTemp": 102,
-  "engine.oilPressure": 4.8,
-  "engine.waterTemp": 87,
-  "engine.waterPressure": 1.6,
-  speed: 180,
-  delta: -0.342,
-};
-
 export function DisplayPreview() {
   return (
     <main style={{ padding: 24, background: "#0b0d11", minHeight: "100vh" }}>
@@ -89,7 +79,7 @@ export function DisplayPreview() {
 
           return (
             <div key={widget.id} style={widgetStyle}>
-              <WidgetRenderer widget={widget} values={previewValues} />
+              <WidgetRenderer widget={widget} />
             </div>
           );
         })}

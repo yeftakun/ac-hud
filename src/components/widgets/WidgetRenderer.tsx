@@ -1,11 +1,11 @@
 import type { CSSProperties } from "react";
+import { useTelemetry } from "../../hooks/useTelemetry";
 import { RawValue } from "./RawValue";
 import { StatBox, type StatBoxStyle } from "./StatBox";
 import { StatGroup, type StatGroupRow } from "./StatGroup";
 import "./hud-widgets.css";
 
 export type WidgetValue = string | number | boolean | null;
-export type WidgetValues = Record<string, WidgetValue>;
 
 export interface WidgetConfig {
   id: string;
@@ -21,17 +21,20 @@ export interface WidgetConfig {
 
 interface WidgetRendererProps {
   widget: WidgetConfig;
-  values?: WidgetValues;
 }
 
-function valueFor(payload: Record<string, unknown>, values?: WidgetValues): WidgetValue | undefined {
+function valueFor(
+  payload: Record<string, unknown>,
+  getValue: ReturnType<typeof useTelemetry>["getValue"],
+): WidgetValue | undefined {
   const dataKey = payload.dataKey;
-  return typeof dataKey === "string" ? values?.[dataKey] : undefined;
+  return typeof dataKey === "string" ? getValue(dataKey) : undefined;
 }
 
-export function WidgetRenderer({ widget, values }: WidgetRendererProps) {
+export function WidgetRenderer({ widget }: WidgetRendererProps) {
+  const { getValue } = useTelemetry();
   const payload = widget.payload ?? {};
-  const value = valueFor(payload, values);
+  const value = valueFor(payload, getValue);
 
   switch (widget.type) {
     case "stat-box":
@@ -51,7 +54,7 @@ export function WidgetRenderer({ widget, values }: WidgetRendererProps) {
         if (typeof row !== "object" || row === null || Array.isArray(row)) return [];
         const config = row as Record<string, unknown>;
         if (typeof config.label !== "string" || typeof config.dataKey !== "string") return [];
-        const rowValue = values?.[config.dataKey];
+        const rowValue = getValue(config.dataKey);
         return [
           {
             label: config.label,
