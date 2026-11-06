@@ -29,7 +29,7 @@ export function KersBar({ charge, input, style, className, mode = "display" }: K
   return (
     <div className={`meter-widget kers-bar ${className ?? ""}`} style={cssVars} data-mode={mode}>
       <div className="meter-widget__header"><span>KERS</span><strong>{typeof charge === "number" ? `${charge.toFixed(0)}%` : "NA"}</strong></div>
-      <div className="meter-widget__track"><span className="meter-widget__fill" /><span className="kers-bar__input" /></div>
+      <div className="meter-widget__track"><span className="meter-widget__fill" style={{ width: `${progress(charge)}%` }} /><span className="kers-bar__input" /></div>
       <small className="kers-bar__caption">INPUT {typeof input === "number" ? `${input.toFixed(0)}%` : "NA"}</small>
     </div>
   );

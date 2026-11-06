@@ -25,7 +25,7 @@ export function TyreWearBar({ value, label = "FL WEAR", style, className, mode =
   return (
     <div className={`meter-widget tyre-wear-bar ${className ?? ""}`} style={cssVars} data-mode={mode}>
       <div className="meter-widget__header"><span>{label}</span><strong>{numericValue === null ? "NA" : `${numericValue.toFixed(1)}%`}</strong></div>
-      <div className="meter-widget__track"><span className="meter-widget__fill" /></div>
+      <div className="meter-widget__track"><span className="meter-widget__fill" style={{ width: `${progress}%` }} /></div>
     </div>
   );
 }

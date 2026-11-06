@@ -1,4 +1,4 @@
-const CACHE_NAME = "ac-hud-static-v1";
+const CACHE_NAME = "ac-hud-static-v2";
 const STATIC_ASSETS = ["/", "/manifest.json", "/icon-placeholder.svg", "/favicon.svg"];
 
 self.addEventListener("install", (event) => {

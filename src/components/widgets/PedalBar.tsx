@@ -39,7 +39,7 @@ export function PedalBar({
   return (
     <div className={`meter-widget pedal-bar ${className ?? ""}`} style={cssVars} data-mode={mode}>
       <div className="meter-widget__header"><span>{label}</span><strong>{numericValue === null ? "NA" : `${numericValue.toFixed(0)}%`}</strong></div>
-      <div className="meter-widget__track"><span className="meter-widget__fill" /></div>
+      <div className="meter-widget__track"><span className="meter-widget__fill" style={{ width: `${progress}%` }} /></div>
     </div>
   );
 }
