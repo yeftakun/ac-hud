@@ -28,16 +28,9 @@ export function SteeringWheel({ value, maxInput = 1, style, className, mode = "d
 
   return (
     <div className={`steering-wheel ${className ?? ""}`} style={cssVars} data-mode={mode}>
-      <span className="steering-wheel__label">STEERING</span>
       <div className="steering-wheel__dial">
-        <span className="steering-wheel__crosshair steering-wheel__crosshair--horizontal" />
-        <span className="steering-wheel__crosshair steering-wheel__crosshair--vertical" />
-        <span className="steering-wheel__spoke steering-wheel__spoke--left" />
-        <span className="steering-wheel__spoke steering-wheel__spoke--right" />
-        <span className="steering-wheel__hub" />
         <span className="steering-wheel__indicator" />
       </div>
-      <strong className="steering-wheel__value">{numericValue === null ? "NA" : numericValue.toFixed(2)}</strong>
     </div>
   );
 }

@@ -200,10 +200,8 @@
   border: 2px solid var(--box-border, #2a3340);
   border-radius: 12px;
   background: var(--box-bg, #141820);
-  color: var(--value-color, #ffffff);
 }
 
-.steering-wheel__label,
 .gforce-widget__label {
   position: absolute;
   top: 7px;
@@ -215,54 +213,25 @@
 
 .steering-wheel__dial {
   position: relative;
-  width: 72%;
+  width: 68%;
   aspect-ratio: 1;
-  border: 5px solid var(--value-color, #ffffff);
+  border: 3px solid var(--value-color, #ffffff);
   border-radius: 50%;
-  opacity: 0.9;
-}
-
-.steering-wheel__crosshair,
-.steering-wheel__spoke {
-  position: absolute;
-  display: block;
-  background: var(--value-color, #ffffff);
-  opacity: 0.7;
-}
-
-.steering-wheel__crosshair--horizontal { top: calc(50% - 1px); left: 8%; width: 84%; height: 2px; }
-.steering-wheel__crosshair--vertical { top: 8%; left: calc(50% - 1px); width: 2px; height: 84%; }
-.steering-wheel__spoke { top: 49%; left: 50%; width: 42%; height: 3px; transform-origin: left center; }
-.steering-wheel__spoke--left { transform: rotate(145deg); }
-.steering-wheel__spoke--right { transform: rotate(35deg); }
-
-.steering-wheel__hub {
-  position: absolute;
-  top: calc(50% - 7px);
-  left: calc(50% - 7px);
-  width: 14px;
-  height: 14px;
-  border-radius: 50%;
-  background: var(--value-color, #ffffff);
+  opacity: 0.95;
 }
 
 .steering-wheel__indicator {
   position: absolute;
   top: -7px;
-  left: calc(50% - 2px);
-  width: 4px;
+  left: calc(50% - 7px);
+  width: 14px;
   height: 14px;
-  border-radius: 999px;
+  border-radius: 50%;
   background: #ff3b30;
-  transform-origin: 2px calc(50% + 49%);
+  box-shadow: 0 0 10px #ff3b30;
+  transform-origin: 7px calc(50% + 48px);
   transform: rotate(var(--steering-rotation, 0deg));
   transition: transform 0.08s linear;
-}
-
-.steering-wheel__value {
-  position: absolute;
-  bottom: 7px;
-  font-size: 11px;
 }
 
 /* ---- G-force ---- */

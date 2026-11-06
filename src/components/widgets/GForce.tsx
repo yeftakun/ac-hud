@@ -19,7 +19,9 @@ export function GForce({ x, y, maxG = 2, style, className, mode = "display" }: G
   const xValue = typeof x === "number" && Number.isFinite(x) ? x : null;
   const yValue = typeof y === "number" && Number.isFinite(y) ? y : null;
   const left = 50 + (xValue === null ? 0 : clamp(xValue / maxG, -1, 1) * 42);
-  const top = 50 - (yValue === null ? 0 : clamp(yValue / maxG, -1, 1) * 42);
+  // Show longitudinal acceleration from the driver's inertial perspective:
+  // accelerating forward moves the dot toward the rear/bottom of the circle.
+  const top = 50 + (yValue === null ? 0 : clamp(yValue / maxG, -1, 1) * 42);
   const cssVars = {
     "--box-bg": style?.boxBg ?? "#141820",
     "--box-border": style?.boxBorder ?? "#2a3340",
