@@ -1,6 +1,8 @@
 import { useEffect, useRef, useState } from "react";
 import type { CSSProperties } from "react";
 import Moveable from "react-moveable";
+import { useHistory } from "../../hooks/useHistory";
+import { FONT_OPTIONS, getFontStyle, isFontStyleKey } from "../../lib/fontOptions";
 import type { StatBoxStyle, WidgetMode } from "../../components/widgets/StatBox";
 import { WidgetRenderer, type WidgetConfig } from "../../components/widgets/WidgetRenderer";
 
@@ -15,11 +17,24 @@ function navigateTo(path: string) {
   window.dispatchEvent(new PopStateEvent("popstate"));
 }
 
+function isImportedWidget(value: unknown): value is WidgetConfig {
+  if (typeof value !== "object" || value === null || Array.isArray(value)) return false;
+  const widget = value as Record<string, unknown>;
+  return (
+    typeof widget.id === "string" &&
+    typeof widget.type === "string" &&
+    typeof widget.x === "number" &&
+    typeof widget.y === "number" &&
+    typeof widget.w === "number" &&
+    typeof widget.h === "number"
+  );
+}
+
 interface Profile {
   schemaVersion: number;
   id: string;
   name: string;
-  canvas: { w: number; h: number; background?: string };
+  canvas: { w: number; h: number; background?: string; fontFamily?: string };
   widgets: WidgetConfig[];
 }
 
@@ -153,15 +168,29 @@ function defaultValueFontSize(type: string): number | null {
 }
 
 export function Editor() {
-  const [profile, setProfile] = useState<Profile | null>(null);
+  const {
+    present: profile,
+    set: setProfile,
+    replace: replaceProfile,
+    beginTransaction,
+    setTransient,
+    commitTransaction,
+    undo,
+    redo,
+    canUndo,
+    canRedo,
+  } = useHistory<Profile | null>(null);
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [selectedElement, setSelectedElement] = useState<HTMLElement | null>(null);
   const [loading, setLoading] = useState(true);
   const [loadError, setLoadError] = useState<string | null>(null);
   const [saveState, setSaveState] = useState<"idle" | "saving" | "saved" | "error">("idle");
   const [isAddPickerOpen, setIsAddPickerOpen] = useState(false);
+  const [isGlobalPropertiesOpen, setIsGlobalPropertiesOpen] = useState(true);
   const [newWidgetType, setNewWidgetType] = useState<AddableWidgetType>("stat-box");
   const [newWidgetDataKey, setNewWidgetDataKey] = useState(DEFAULT_DATA_KEYS["stat-box"]);
+  const [importMessage, setImportMessage] = useState<string | null>(null);
+  const importInputRef = useRef<HTMLInputElement>(null);
   const elementRefs = useRef<Record<string, HTMLElement | null>>({});
   const stageRef = useRef<HTMLDivElement>(null);
   const canvasRef = useRef<HTMLDivElement>(null);
@@ -176,7 +205,7 @@ export function Editor() {
           signal: controller.signal,
         });
         if (!response.ok) throw new Error(`Config API returned ${response.status}`);
-        setProfile((await response.json()) as Profile);
+        replaceProfile((await response.json()) as Profile);
         setLoadError(null);
       } catch (error) {
         if (error instanceof DOMException && error.name === "AbortError") return;
@@ -188,7 +217,7 @@ export function Editor() {
 
     void loadProfile();
     return () => controller.abort();
-  }, []);
+  }, [replaceProfile]);
 
   const selectedWidget = profile?.widgets.find((widget) => widget.id === selectedId) ?? null;
 
@@ -210,6 +239,18 @@ export function Editor() {
     function handleKeyDown(event: KeyboardEvent) {
       const target = event.target as HTMLElement | null;
       const isEditingText = target?.tagName === "INPUT" || target?.tagName === "TEXTAREA" || target?.tagName === "SELECT";
+      const modifier = event.ctrlKey || event.metaKey;
+      if (modifier && !isEditingText && event.key.toLowerCase() === "z") {
+        event.preventDefault();
+        if (event.shiftKey) redo();
+        else undo();
+        return;
+      }
+      if (modifier && !isEditingText && event.key.toLowerCase() === "y") {
+        event.preventDefault();
+        redo();
+        return;
+      }
       if (event.key === "Delete" && selectedId && !isEditingText) {
         setProfile((current) => current ? { ...current, widgets: current.widgets.filter((widget) => widget.id !== selectedId) } : current);
         delete elementRefs.current[selectedId];
@@ -220,10 +261,11 @@ export function Editor() {
 
     window.addEventListener("keydown", handleKeyDown);
     return () => window.removeEventListener("keydown", handleKeyDown);
-  }, [selectedId]);
+  }, [canRedo, canUndo, redo, selectedId, undo]);
 
-  function updateWidget(widgetId: string, patch: Partial<WidgetConfig>) {
-    setProfile((current) => {
+  function updateWidget(widgetId: string, patch: Partial<WidgetConfig>, transient = false) {
+    const updateProfile = transient ? setTransient : setProfile;
+    updateProfile((current) => {
       if (!current) return current;
       return {
         ...current,
@@ -305,10 +347,65 @@ export function Editor() {
         body: JSON.stringify(profile),
       });
       if (!response.ok) throw new Error(`Config API returned ${response.status}`);
-      setProfile((await response.json()) as Profile);
+      await response.json();
       setSaveState("saved");
     } catch {
       setSaveState("error");
+    }
+  }
+
+  function exportProfile() {
+    if (!profile) return;
+    const fileContent = JSON.stringify(profile, null, 2);
+    const blob = new Blob([fileContent], { type: "application/json" });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    const safeName = profile.name.trim().replace(/[^a-z0-9]+/gi, "-").replace(/^-|-$/g, "").toLowerCase() || profile.id;
+    link.href = url;
+    link.download = `${safeName}.json`;
+    link.click();
+    URL.revokeObjectURL(url);
+    setImportMessage(null);
+  }
+
+  async function importProfile(file: File | undefined) {
+    if (!file || !profile) return;
+    try {
+      const parsed: unknown = JSON.parse(await file.text());
+      if (typeof parsed !== "object" || parsed === null || Array.isArray(parsed)) throw new Error("File harus berupa object JSON.");
+      const imported = parsed as Record<string, unknown>;
+      if (!Array.isArray(imported.widgets) || !imported.widgets.every(isImportedWidget)) {
+        throw new Error("Format widgets tidak valid.");
+      }
+      const importedWidgets = imported.widgets.filter(isImportedWidget);
+      if (typeof imported.canvas !== "object" || imported.canvas === null || Array.isArray(imported.canvas)) {
+        throw new Error("Format canvas tidak valid.");
+      }
+      const importedCanvas = imported.canvas as Record<string, unknown>;
+      if (typeof importedCanvas.w !== "number" || typeof importedCanvas.h !== "number") {
+        throw new Error("Canvas harus memiliki w dan h.");
+      }
+      const importedCanvasWidth = importedCanvas.w;
+      const importedCanvasHeight = importedCanvas.h;
+      setProfile((current) => current ? {
+        ...current,
+        schemaVersion: typeof imported.schemaVersion === "number" ? imported.schemaVersion : current.schemaVersion,
+        name: typeof imported.name === "string" ? imported.name : current.name,
+        canvas: {
+          w: importedCanvasWidth,
+          h: importedCanvasHeight,
+          background: typeof importedCanvas.background === "string" ? importedCanvas.background : current.canvas.background,
+          fontFamily: isFontStyleKey(importedCanvas.fontFamily) ? importedCanvas.fontFamily : current.canvas.fontFamily,
+        },
+        widgets: importedWidgets,
+      } : current);
+      setSelectedId(null);
+      setSelectedElement(null);
+      setImportMessage(`Imported ${importedWidgets.length} widgets. Klik Save untuk menerapkan permanen.`);
+    } catch (error) {
+      setImportMessage(error instanceof Error ? `Import gagal: ${error.message}` : "Import gagal: format file tidak valid.");
+    } finally {
+      if (importInputRef.current) importInputRef.current.value = "";
     }
   }
 
@@ -321,6 +418,8 @@ export function Editor() {
   const canvasWidth = profile.canvas.w || CANVAS_WIDTH;
   const canvasHeight = profile.canvas.h || CANVAS_HEIGHT;
   const canvasBackground = profile.canvas.background || CANVAS_BACKGROUND;
+  const canvasFontStyle = getFontStyle(profile.canvas.fontFamily);
+  const canvasFontKey = isFontStyleKey(profile.canvas.fontFamily) ? profile.canvas.fontFamily : "system";
   const canvasScale = Math.min(
     Math.max((stageSize.width - 48) / canvasWidth, 0.1),
     Math.max((stageSize.height - 48) / canvasHeight, 0.1),
@@ -350,7 +449,18 @@ export function Editor() {
           >
             Display
           </button>
+          <input
+            ref={importInputRef}
+            type="file"
+            accept=".json,application/json"
+            style={{ display: "none" }}
+            onChange={(event) => void importProfile(event.target.files?.[0])}
+          />
+          <button type="button" style={quietButtonStyle} onClick={() => importInputRef.current?.click()}>Import</button>
+          <button type="button" style={quietButtonStyle} onClick={exportProfile}>Export</button>
           <span style={fitBadgeStyle}>FIT {Math.round(canvasScale * 100)}%</span>
+          <button type="button" onClick={undo} disabled={!canUndo} title="Undo (Ctrl/Cmd+Z)">Undo</button>
+          <button type="button" onClick={redo} disabled={!canRedo} title="Redo (Ctrl/Cmd+Y)">Redo</button>
           <button type="button" style={primaryButtonStyle} onClick={() => setIsAddPickerOpen(true)}>+ Add Widget</button>
           <button type="button" onClick={deleteSelectedWidget} disabled={!selectedWidget}>
             Delete
@@ -405,6 +515,7 @@ export function Editor() {
                 height: canvasHeight,
                 overflow: "hidden",
                 background: canvasBackground,
+                ...canvasFontStyle,
                 border: "1px solid #2a3340",
                 transform: `scale(${canvasScale})`,
                 transformOrigin: "top left",
@@ -456,12 +567,16 @@ export function Editor() {
             resizable
             keepRatio={false}
             renderDirections={["nw", "n", "ne", "w", "e", "sw", "s", "se"]}
+            onDragStart={beginTransaction}
             onDrag={({ left, top }) => {
-              if (selectedId) updateWidget(selectedId, { x: round(left / canvasScale), y: round(top / canvasScale) });
+              if (selectedId) updateWidget(selectedId, { x: round(left / canvasScale), y: round(top / canvasScale) }, true);
             }}
+            onDragEnd={commitTransaction}
+            onResizeStart={beginTransaction}
             onResize={({ width, height }) => {
-              if (selectedId) updateWidget(selectedId, { w: round(width / canvasScale), h: round(height / canvasScale) });
+              if (selectedId) updateWidget(selectedId, { w: round(width / canvasScale), h: round(height / canvasScale) }, true);
             }}
+            onResizeEnd={commitTransaction}
           />
             </div>
           </div>
@@ -469,25 +584,46 @@ export function Editor() {
 
         <aside style={sidebarStyle}>
           <section>
-            <h2 style={{ marginTop: 0 }}>Global properties</h2>
-            <label style={fieldStyle}>
-              Profile name
-              <input value={profile.name} onChange={(event) => updateProfileName(event.target.value)} />
-            </label>
-            <div style={dimensionGridStyle}>
-              <label style={fieldStyle}>
-                Canvas width
-                <input type="number" min={320} max={4000} step={1} value={canvasWidth} onChange={(event) => updateCanvasDimension("w", event.target.value)} />
-              </label>
-              <label style={fieldStyle}>
-                Canvas height
-                <input type="number" min={320} max={4000} step={1} value={canvasHeight} onChange={(event) => updateCanvasDimension("h", event.target.value)} />
-              </label>
-            </div>
-            <label style={colorFieldStyle}>
-              <span>Canvas background</span>
-              <input type="color" value={canvasBackground} onChange={(event) => updateCanvasBackground(event.target.value)} />
-            </label>
+            <button
+              type="button"
+              style={drawerHeaderStyle}
+              aria-expanded={isGlobalPropertiesOpen}
+              onClick={() => setIsGlobalPropertiesOpen((open) => !open)}
+            >
+              <span>Global properties</span>
+              <span style={drawerChevronStyle}>{isGlobalPropertiesOpen ? "⌃" : "⌄"}</span>
+            </button>
+            {isGlobalPropertiesOpen ? (
+              <div>
+                <label style={fieldStyle}>
+                  Profile name
+                  <input value={profile.name} onChange={(event) => updateProfileName(event.target.value)} />
+                </label>
+                <div style={dimensionGridStyle}>
+                  <label style={fieldStyle}>
+                    Canvas width
+                    <input type="number" min={320} max={4000} step={1} value={canvasWidth} onChange={(event) => updateCanvasDimension("w", event.target.value)} />
+                  </label>
+                  <label style={fieldStyle}>
+                    Canvas height
+                    <input type="number" min={320} max={4000} step={1} value={canvasHeight} onChange={(event) => updateCanvasDimension("h", event.target.value)} />
+                  </label>
+                </div>
+                <label style={colorFieldStyle}>
+                  <span>Canvas background</span>
+                  <input type="color" value={canvasBackground} onChange={(event) => updateCanvasBackground(event.target.value)} />
+                </label>
+                <label style={fieldStyle}>
+                  Font style
+                  <select
+                    value={canvasFontKey}
+                    onChange={(event) => setProfile((current) => current ? { ...current, canvas: { ...current.canvas, fontFamily: event.target.value } } : current)}
+                  >
+                    {FONT_OPTIONS.map((option) => <option key={option.value} value={option.value}>{option.label}</option>)}
+                  </select>
+                </label>
+              </div>
+            ) : null}
           </section>
 
           <div style={{ marginTop: 26, paddingTop: 20, borderTop: "1px solid #2a3340" }}>
@@ -562,6 +698,7 @@ export function Editor() {
           </div>
           {saveState === "saved" ? <div style={successStyle}>Saved.</div> : null}
           {saveState === "error" ? <div style={errorStyle}>Save failed.</div> : null}
+          {importMessage ? <div style={importMessage.startsWith("Import gagal") ? errorStyle : successStyle}>{importMessage}</div> : null}
         </aside>
       </div>
     </main>
@@ -734,6 +871,28 @@ const dimensionGridStyle: CSSProperties = {
   display: "grid",
   gridTemplateColumns: "1fr 1fr",
   gap: 10,
+};
+
+const drawerHeaderStyle: CSSProperties = {
+  display: "flex",
+  alignItems: "center",
+  justifyContent: "space-between",
+  width: "100%",
+  padding: "0 0 12px",
+  border: 0,
+  borderBottom: "1px solid #2a3340",
+  color: "#ffffff",
+  background: "transparent",
+  fontSize: 16,
+  fontWeight: 700,
+  textAlign: "left",
+  cursor: "pointer",
+};
+
+const drawerChevronStyle: CSSProperties = {
+  color: "#8b93a3",
+  fontSize: 20,
+  lineHeight: 1,
 };
 
 const colorFieldStyle: CSSProperties = {

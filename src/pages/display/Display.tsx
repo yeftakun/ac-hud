@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { WidgetRenderer, type WidgetConfig } from "../../components/widgets/WidgetRenderer";
+import { getFontStyle } from "../../lib/fontOptions";
 
 const CONFIG_API_URL = "http://localhost:3001";
 const CANVAS_WIDTH = 960;
@@ -8,7 +9,7 @@ const CANVAS_HEIGHT = 540;
 interface Profile {
   id: string;
   name: string;
-  canvas: { w: number; h: number; background?: string };
+  canvas: { w: number; h: number; background?: string; fontFamily?: string };
   widgets: WidgetConfig[];
 }
 
@@ -114,6 +115,7 @@ export function Display({ profileId }: DisplayProps) {
             height: CANVAS_HEIGHT,
             overflow: "hidden",
             background: profile.canvas.background ?? "#11151c",
+            ...getFontStyle(profile.canvas.fontFamily),
             transform: `scale(${scale})`,
             transformOrigin: "top left",
           }}

@@ -169,8 +169,8 @@
       {
         "id": "w_current_lap",
         "type": "stat-box",
-        "x": 674,
-        "y": 94,
+        "x": 657,
+        "y": 106,
         "w": 200,
         "h": 65,
         "zIndex": 2,
