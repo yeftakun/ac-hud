@@ -1,0 +1,35 @@
+[
+  {
+    "schemaVersion": 1,
+    "id": "profile_001",
+    "name": "GT3 Endurance Layout",
+    "canvas": {
+      "w": 960,
+      "h": 540
+    },
+    "widgets": [
+      {
+        "id": "w_best_lap",
+        "type": "stat-box",
+        "x": 120,
+        "y": 40,
+        "w": 180,
+        "h": 70,
+        "zIndex": 2,
+        "style": {
+          "boxBg": "#141820",
+          "boxBorder": "#2a3340",
+          "labelColor": "#a8b2c0",
+          "valueColor": "#ffffff"
+        },
+        "payload": {
+          "dataKey": "lap.best",
+          "variant": "long",
+          "label": "BEST LAP",
+          "unit": null,
+          "decimals": 3
+        }
+      }
+    ]
+  }
+]
