@@ -51,6 +51,88 @@
   opacity: 0.7;
 }
 
+/* ---- StatGroup ---- */
+
+.stat-group {
+  align-items: stretch;
+  padding: 12px 14px;
+}
+
+.stat-group__rows {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  width: 100%;
+}
+
+.stat-group__row {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.stat-group__label {
+  color: var(--label-color, #a8b2c0);
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+}
+
+.stat-group__value {
+  color: var(--value-color, #ffffff);
+  font-size: 20px;
+  font-weight: 800;
+  line-height: 1;
+  white-space: nowrap;
+}
+
+.stat-group__unit {
+  margin-left: 4px;
+  font-size: 11px;
+  font-weight: 600;
+  opacity: 0.7;
+}
+
+/* ---- RawValue ---- */
+
+.raw-value {
+  display: flex;
+  align-items: baseline;
+  justify-content: center;
+  width: 100%;
+  height: 100%;
+  color: var(--value-color, #ffffff);
+  font-size: var(--raw-font-size, 48px);
+  font-weight: 800;
+  line-height: 1;
+}
+
+.raw-value__suffix {
+  margin-left: 6px;
+  font-size: 0.35em;
+  font-weight: 600;
+  opacity: 0.7;
+}
+
+/* ---- Renderer fallback ---- */
+
+.widget-placeholder {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  height: 100%;
+  box-sizing: border-box;
+  border: 2px dashed #6b7280;
+  border-radius: 8px;
+  background: #374151;
+  color: #d1d5db;
+  font-size: 12px;
+  text-align: center;
+}
+
 /* ---- Tyres widget ---- */
 
 .tyres-widget {
