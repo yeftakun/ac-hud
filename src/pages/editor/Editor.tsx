@@ -31,8 +31,112 @@ const COLOR_FIELDS: Array<{ key: keyof StatBoxStyle; label: string }> = [
   { key: "valueColor", label: "Value color" },
 ];
 
+const ADDABLE_WIDGET_TYPES = [
+  "stat-box",
+  "stat-group",
+  "raw-value",
+  "drs",
+  "rpm-bar",
+  "activation-lights",
+  "tyres",
+] as const;
+
+type AddableWidgetType = (typeof ADDABLE_WIDGET_TYPES)[number];
+
+const DEFAULT_DATA_KEYS: Record<AddableWidgetType, string> = {
+  "stat-box": "lap.best",
+  "stat-group": "engine.oilTemp",
+  "raw-value": "speed",
+  drs: "drs.active",
+  "rpm-bar": "rpm",
+  "activation-lights": "pit.active",
+  tyres: "tyres.FL.psi",
+};
+
 function round(value: number): number {
   return Math.round(value);
+}
+
+function hasAreaOverlap(a: Pick<WidgetConfig, "x" | "y" | "w" | "h">, b: Pick<WidgetConfig, "x" | "y" | "w" | "h">) {
+  return (
+    a.x < b.x + b.w &&
+    a.x + a.w > b.x &&
+    a.y < b.y + b.h &&
+    a.y + a.h > b.y
+  );
+}
+
+function findOpenPosition(widgets: WidgetConfig[], w: number, h: number) {
+  for (let y = 20; y <= CANVAS_HEIGHT - h; y += 20) {
+    for (let x = 20; x <= CANVAS_WIDTH - w; x += 20) {
+      const candidate = { x, y, w, h };
+      if (!widgets.some((widget) => hasAreaOverlap(candidate, widget))) return { x, y };
+    }
+  }
+
+  return { x: 20, y: 20 };
+}
+
+function createWidget(type: AddableWidgetType, dataKey: string, widgets: WidgetConfig[]): WidgetConfig {
+  const dimensions: Record<AddableWidgetType, { w: number; h: number }> = {
+    "stat-box": { w: 180, h: 70 },
+    "stat-group": { w: 240, h: 150 },
+    "raw-value": { w: 180, h: 80 },
+    drs: { w: 120, h: 80 },
+    "rpm-bar": { w: 240, h: 50 },
+    "activation-lights": { w: 60, h: 180 },
+    tyres: { w: 220, h: 220 },
+  };
+  const { w, h } = dimensions[type];
+  const position = findOpenPosition(widgets, w, h);
+  const id = `w_${type.replaceAll("-", "_")}_${crypto.randomUUID().slice(0, 8)}`;
+  const style = { ...STYLE_DEFAULTS };
+
+  let payload: Record<string, unknown> = { dataKey };
+  if (type === "stat-box") payload = { dataKey, label: "NEW STAT", decimals: 2 };
+  if (type === "stat-group") {
+    payload = { rows: [{ dataKey, label: "NEW VALUE" }] };
+  }
+  if (type === "raw-value") payload = { dataKey, fontSize: 48 };
+  if (type === "drs") payload = { dataKey, activeColor: "#2ee66b", inactiveColor: "#2a3340", label: "DRS" };
+  if (type === "rpm-bar") {
+    payload = {
+      dataKey,
+      redlineDataKey: "redline",
+      style: "lamp",
+      fillDirection: "edge-to-center",
+      segments: 16,
+      zones: [
+        { upTo: 0.6, color: "#2ee66b" },
+        { upTo: 0.85, color: "#ffd400" },
+        { upTo: 1, color: "#ff3b30" },
+      ],
+    };
+  }
+  if (type === "activation-lights") {
+    payload = {
+      lampCount: 4,
+      priority: ["pit", "abs", "tc"],
+      states: {
+        pit: { dataKey, color: "#ffd400", blink: true, blinkMs: 400 },
+        abs: { dataKey: "abs", color: "#ff3b30", blink: false },
+        tc: { dataKey: "tc", color: "#a855f7", blink: false },
+      },
+    };
+  }
+  if (type === "tyres") {
+    payload = {
+      dataKeys: {
+        FL: { psi: dataKey, temp: "tyres.FL.temp" },
+        FR: { psi: "tyres.FR.psi", temp: "tyres.FR.temp" },
+        RL: { psi: "tyres.RL.psi", temp: "tyres.RL.temp" },
+        RR: { psi: "tyres.RR.psi", temp: "tyres.RR.temp" },
+      },
+      tempThresholds: { cold: 70, optimal: 95, hot: 110 },
+    };
+  }
+
+  return { id, type, ...position, w, h, zIndex: 2, style, payload };
 }
 
 export function Editor() {
@@ -42,6 +146,9 @@ export function Editor() {
   const [loading, setLoading] = useState(true);
   const [loadError, setLoadError] = useState<string | null>(null);
   const [saveState, setSaveState] = useState<"idle" | "saving" | "saved" | "error">("idle");
+  const [isAddPickerOpen, setIsAddPickerOpen] = useState(false);
+  const [newWidgetType, setNewWidgetType] = useState<AddableWidgetType>("stat-box");
+  const [newWidgetDataKey, setNewWidgetDataKey] = useState(DEFAULT_DATA_KEYS["stat-box"]);
   const elementRefs = useRef<Record<string, HTMLElement | null>>({});
   const canvasRef = useRef<HTMLDivElement>(null);
 
@@ -74,6 +181,20 @@ export function Editor() {
     setSelectedElement(selectedId ? elementRefs.current[selectedId] ?? null : null);
   }, [selectedId, profile]);
 
+  useEffect(() => {
+    function handleKeyDown(event: KeyboardEvent) {
+      const target = event.target as HTMLElement | null;
+      const isEditingText = target?.tagName === "INPUT" || target?.tagName === "TEXTAREA" || target?.tagName === "SELECT";
+      if (event.key === "Delete" && selectedId && !isEditingText) {
+        setProfile((current) => current ? { ...current, widgets: current.widgets.filter((widget) => widget.id !== selectedId) } : current);
+        setSelectedId(null);
+      }
+    }
+
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, [selectedId]);
+
   function updateWidget(widgetId: string, patch: Partial<WidgetConfig>) {
     setProfile((current) => {
       if (!current) return current;
@@ -98,6 +219,21 @@ export function Editor() {
     updateWidget(selectedWidget.id, {
       payload: { ...selectedWidget.payload, [key]: value },
     });
+  }
+
+  function addWidget() {
+    setProfile((current) => {
+      if (!current) return current;
+      const widget = createWidget(newWidgetType, newWidgetDataKey.trim(), current.widgets);
+      return { ...current, widgets: [...current.widgets, widget] };
+    });
+    setIsAddPickerOpen(false);
+  }
+
+  function deleteSelectedWidget() {
+    if (!selectedId) return;
+    setProfile((current) => current ? { ...current, widgets: current.widgets.filter((widget) => widget.id !== selectedId) } : current);
+    setSelectedId(null);
   }
 
   async function saveProfile() {
@@ -133,10 +269,38 @@ export function Editor() {
           <strong>{profile.name}</strong>
           <span style={{ marginLeft: 12, color: "#8b93a3", fontSize: 13 }}>Desktop editor</span>
         </div>
-        <button type="button" onClick={() => void saveProfile()} disabled={saveState === "saving"}>
-          {saveState === "saving" ? "Saving…" : "Save"}
-        </button>
+        <div style={{ display: "flex", gap: 8 }}>
+          <button type="button" onClick={() => setIsAddPickerOpen((open) => !open)}>
+            Add Widget
+          </button>
+          <button type="button" onClick={deleteSelectedWidget} disabled={!selectedWidget}>
+            Delete
+          </button>
+          <button type="button" onClick={() => void saveProfile()} disabled={saveState === "saving"}>
+            {saveState === "saving" ? "Saving…" : "Save"}
+          </button>
+        </div>
       </header>
+
+      {isAddPickerOpen ? (
+        <section style={addPickerStyle}>
+          <label style={pickerFieldStyle}>
+            Type
+            <select value={newWidgetType} onChange={(event) => {
+              const type = event.target.value as AddableWidgetType;
+              setNewWidgetType(type);
+              setNewWidgetDataKey(DEFAULT_DATA_KEYS[type]);
+            }}>
+              {ADDABLE_WIDGET_TYPES.map((type) => <option key={type} value={type}>{type}</option>)}
+            </select>
+          </label>
+          <label style={pickerFieldStyle}>
+            Initial dataKey
+            <input value={newWidgetDataKey} onChange={(event) => setNewWidgetDataKey(event.target.value)} placeholder="e.g. rpm" />
+          </label>
+          <button type="button" onClick={addWidget}>Add to canvas</button>
+        </section>
+      ) : null}
 
       <div style={workspaceStyle}>
         <div
@@ -270,6 +434,27 @@ const workspaceStyle: CSSProperties = {
   alignItems: "flex-start",
   gap: 20,
   overflowX: "auto",
+};
+
+const addPickerStyle: CSSProperties = {
+  display: "flex",
+  alignItems: "flex-end",
+  gap: 14,
+  width: "fit-content",
+  maxWidth: "100%",
+  marginBottom: 16,
+  padding: 14,
+  border: "1px solid #2a3340",
+  borderRadius: 8,
+  background: "#141820",
+};
+
+const pickerFieldStyle: CSSProperties = {
+  display: "flex",
+  flexDirection: "column",
+  gap: 6,
+  color: "#a8b2c0",
+  fontSize: 13,
 };
 
 const sidebarStyle: CSSProperties = {
