@@ -12,10 +12,10 @@ function navigate(path: string) {
 }
 
 function App() {
-  const [path, setPath] = useState(window.location.pathname);
+  const [path, setPath] = useState(window.location.pathname.replace(/\/$/, "") || "/");
 
   useEffect(() => {
-    const handlePopState = () => setPath(window.location.pathname);
+    const handlePopState = () => setPath(window.location.pathname.replace(/\/$/, "") || "/");
     window.addEventListener("popstate", handlePopState);
     return () => window.removeEventListener("popstate", handlePopState);
   }, []);
@@ -23,7 +23,12 @@ function App() {
   const displayMatch = path.match(/^\/display\/([^/]+)$/);
   if (displayMatch) return <Display profileId={decodeURIComponent(displayMatch[1])} />;
   if (path === "/editor") return <Editor />;
-  return <ProfilePicker onSelect={(profileId) => navigate(`/display/${encodeURIComponent(profileId)}`)} />;
+  return (
+    <ProfilePicker
+      onSelect={(profileId) => navigate(`/display/${encodeURIComponent(profileId)}`)}
+      onOpenEditor={() => navigate("/editor")}
+    />
+  );
 }
 
 createRoot(document.getElementById("root")!).render(

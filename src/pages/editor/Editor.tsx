@@ -116,11 +116,11 @@ function createWidget(type: AddableWidgetType, dataKey: string, widgets: WidgetC
   if (type === "activation-lights") {
     payload = {
       lampCount: 4,
-      priority: ["pit", "abs", "tc"],
+      priority: ["abs", "tc", "pit"],
       states: {
         pit: { dataKey, color: "#ffd400", blink: true, blinkMs: 400 },
-        abs: { dataKey: "abs", color: "#ff3b30", blink: false },
-        tc: { dataKey: "tc", color: "#a855f7", blink: false },
+        abs: { dataKey: "abs.active", color: "#ff3b30", blink: false },
+        tc: { dataKey: "tc.active", color: "#a855f7", blink: false },
       },
     };
   }
@@ -187,6 +187,8 @@ export function Editor() {
       const isEditingText = target?.tagName === "INPUT" || target?.tagName === "TEXTAREA" || target?.tagName === "SELECT";
       if (event.key === "Delete" && selectedId && !isEditingText) {
         setProfile((current) => current ? { ...current, widgets: current.widgets.filter((widget) => widget.id !== selectedId) } : current);
+        delete elementRefs.current[selectedId];
+        setSelectedElement(null);
         setSelectedId(null);
       }
     }
@@ -233,6 +235,8 @@ export function Editor() {
   function deleteSelectedWidget() {
     if (!selectedId) return;
     setProfile((current) => current ? { ...current, widgets: current.widgets.filter((widget) => widget.id !== selectedId) } : current);
+    delete elementRefs.current[selectedId];
+    setSelectedElement(null);
     setSelectedId(null);
   }
 
@@ -340,6 +344,7 @@ export function Editor() {
                 style={widgetStyle}
                 onClick={(event) => {
                   event.stopPropagation();
+                  setSelectedElement(event.currentTarget);
                   setSelectedId(widget.id);
                 }}
               >

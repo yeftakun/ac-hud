@@ -9,9 +9,10 @@ export interface ProfileSummary {
 
 interface ProfilePickerProps {
   onSelect: (profileId: string) => void;
+  onOpenEditor: () => void;
 }
 
-export function ProfilePicker({ onSelect }: ProfilePickerProps) {
+export function ProfilePicker({ onSelect, onOpenEditor }: ProfilePickerProps) {
   const [profiles, setProfiles] = useState<ProfileSummary[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -54,6 +55,9 @@ export function ProfilePicker({ onSelect }: ProfilePickerProps) {
             </button>
           ))}
         </div>
+        <button type="button" style={editorButtonStyle} onClick={onOpenEditor}>
+          Open Editor
+        </button>
       </section>
     </main>
   );
@@ -93,6 +97,17 @@ const profileButtonStyle: React.CSSProperties = {
   color: "#ffffff",
   background: "#1c2330",
   textAlign: "left",
+  cursor: "pointer",
+};
+
+const editorButtonStyle: React.CSSProperties = {
+  width: "100%",
+  marginTop: 16,
+  padding: "10px 14px",
+  border: "1px solid #465064",
+  borderRadius: 8,
+  color: "#ffffff",
+  background: "#252d3b",
   cursor: "pointer",
 };
 

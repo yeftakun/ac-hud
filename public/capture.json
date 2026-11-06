@@ -13,6 +13,8 @@
   "abs": 2,
   "tc": 5,
   "bb": 56.5,
+  "abs.active": false,
+  "tc.active": false,
   "engine.oilTemp": 102,
   "engine.oilPressure": 4.8,
   "engine.waterTemp": 87,

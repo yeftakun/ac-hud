@@ -61,9 +61,9 @@
         "payload": {
           "lampCount": 4,
           "priority": [
-            "pit",
             "abs",
-            "tc"
+            "tc",
+            "pit"
           ],
           "states": {
             "pit": {
@@ -75,12 +75,12 @@
             "abs": {
               "color": "#ff3b30",
               "blink": false,
-              "dataKey": "abs"
+              "dataKey": "abs.active"
             },
             "tc": {
               "color": "#a855f7",
               "blink": false,
-              "dataKey": "tc"
+              "dataKey": "tc.active"
             }
           }
         }
@@ -239,8 +239,8 @@
         "zIndex": 2,
         "style": {
           "boxBg": "#141820",
-          "boxBorder": "#2a3340",
-          "labelColor": "#a8b2c0",
+          "boxBorder": "#ff0000",
+          "labelColor": "#ff0000",
           "valueColor": "#ffffff"
         },
         "payload": {
