@@ -1,5 +1,5 @@
 import type { CSSProperties } from "react";
-import type { StatBoxStyle } from "./StatBox";
+import type { StatBoxStyle, WidgetMode } from "./StatBox";
 import "./hud-widgets.css";
 
 export interface StatGroupRow {
@@ -13,6 +13,7 @@ export interface StatGroupProps {
   rows: StatGroupRow[];
   style?: StatBoxStyle;
   className?: string;
+  mode?: WidgetMode;
 }
 
 const DEFAULT_STYLE: Required<StatBoxStyle> = {
@@ -30,7 +31,7 @@ function formatValue(value: StatGroupRow["value"], decimals?: number): string {
   return String(value);
 }
 
-export function StatGroup({ rows, style, className }: StatGroupProps) {
+export function StatGroup({ rows, style, className, mode = "display" }: StatGroupProps) {
   const merged = { ...DEFAULT_STYLE, ...style };
   const cssVars = {
     "--box-bg": merged.boxBg,
@@ -40,7 +41,7 @@ export function StatGroup({ rows, style, className }: StatGroupProps) {
   } as CSSProperties;
 
   return (
-    <div className={`hud-box stat-group ${className ?? ""}`} style={cssVars}>
+    <div className={`hud-box stat-group ${className ?? ""}`} style={cssVars} data-mode={mode}>
       <div className="stat-group__rows">
         {rows.map((row) => {
           const displayValue = formatValue(row.value, row.decimals);

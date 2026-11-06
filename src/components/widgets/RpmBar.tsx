@@ -1,5 +1,5 @@
 import type { CSSProperties } from "react";
-import type { StatBoxStyle } from "./StatBox";
+import type { StatBoxStyle, WidgetMode } from "./StatBox";
 import "./hud-widgets.css";
 
 export interface RpmZone {
@@ -17,6 +17,7 @@ export interface RpmBarProps {
   fillDirection?: RpmFillDirection;
   style?: StatBoxStyle;
   className?: string;
+  mode?: WidgetMode;
 }
 
 const DEFAULT_ZONES: RpmZone[] = [
@@ -41,6 +42,7 @@ export function RpmBar({
   fillDirection = "edge-to-center",
   style,
   className,
+  mode = "display",
 }: RpmBarProps) {
   const safeSegments = Math.max(1, Math.floor(segments));
   const progress = rpm == null || redline <= 0 ? 0 : clamp(rpm / redline, 0, 1);
@@ -51,7 +53,7 @@ export function RpmBar({
   } as CSSProperties;
 
   return (
-    <div className={`rpm-bar ${className ?? ""}`} style={cssVars}>
+    <div className={`rpm-bar ${className ?? ""}`} style={cssVars} data-mode={mode}>
       <div className="rpm-bar__segments" aria-label="RPM">
         {Array.from({ length: safeSegments }, (_, index) => {
           const isFilled =

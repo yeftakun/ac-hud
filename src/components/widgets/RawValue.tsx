@@ -1,5 +1,5 @@
 import type { CSSProperties } from "react";
-import type { StatBoxStyle } from "./StatBox";
+import type { StatBoxStyle, WidgetMode } from "./StatBox";
 import "./hud-widgets.css";
 
 export interface RawValueProps {
@@ -10,6 +10,7 @@ export interface RawValueProps {
   fontSize?: number;
   style?: StatBoxStyle;
   className?: string;
+  mode?: WidgetMode;
 }
 
 function formatValue(
@@ -39,6 +40,7 @@ export function RawValue({
   fontSize = 48,
   style,
   className,
+  mode = "display",
 }: RawValueProps) {
   const cssVars = {
     "--value-color": style?.valueColor ?? "#ffffff",
@@ -47,7 +49,7 @@ export function RawValue({
   const displayValue = formatValue(value, decimals, showSign);
 
   return (
-    <div className={`raw-value ${className ?? ""}`} style={cssVars}>
+    <div className={`raw-value ${className ?? ""}`} style={cssVars} data-mode={mode}>
       <span>{displayValue}</span>
       {displayValue !== "NA" && suffix ? <span className="raw-value__suffix">{suffix}</span> : null}
     </div>

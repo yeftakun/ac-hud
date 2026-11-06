@@ -9,6 +9,8 @@ export interface StatBoxStyle {
   valueColor?: string;
 }
 
+export type WidgetMode = "edit" | "display";
+
 export interface StatBoxProps {
   label: string;
   /** Resolved value for this widget's dataKey. Pass null/undefined for the
@@ -18,6 +20,7 @@ export interface StatBoxProps {
   decimals?: number;
   style?: StatBoxStyle;
   className?: string;
+  mode?: WidgetMode;
 }
 
 const DEFAULT_STYLE: Required<StatBoxStyle> = {
@@ -42,6 +45,7 @@ export function StatBox({
   decimals,
   style,
   className,
+  mode = "display",
 }: StatBoxProps) {
   const merged = { ...DEFAULT_STYLE, ...style };
   const cssVars = {
@@ -55,7 +59,7 @@ export function StatBox({
   const showUnit = displayValue !== "NA" && unit;
 
   return (
-    <div className={`hud-box ${className ?? ""}`} style={cssVars}>
+    <div className={`hud-box ${className ?? ""}`} style={cssVars} data-mode={mode}>
       <span className="hud-box__label">{label}</span>
       <div className="statbox__value">
         <span>{displayValue}</span>

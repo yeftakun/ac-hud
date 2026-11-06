@@ -4,7 +4,7 @@ import { ActivationLights, type ActivationState } from "./ActivationLights";
 import { Drs } from "./Drs";
 import { RawValue } from "./RawValue";
 import { RpmBar, type RpmZone } from "./RpmBar";
-import { StatBox, type StatBoxStyle } from "./StatBox";
+import { StatBox, type StatBoxStyle, type WidgetMode } from "./StatBox";
 import { StatGroup, type StatGroupRow } from "./StatGroup";
 import { TyresWidget, type Corner, type TyreReading, type TyreThresholds } from "./TyresWidget";
 import "./hud-widgets.css";
@@ -25,6 +25,7 @@ export interface WidgetConfig {
 
 interface WidgetRendererProps {
   widget: WidgetConfig;
+  mode?: WidgetMode;
 }
 
 function valueFor(
@@ -39,7 +40,7 @@ function isRecord(value: unknown): value is Record<string, unknown> {
   return typeof value === "object" && value !== null && !Array.isArray(value);
 }
 
-export function WidgetRenderer({ widget }: WidgetRendererProps) {
+export function WidgetRenderer({ widget, mode = "display" }: WidgetRendererProps) {
   const { getValue } = useTelemetry();
   const payload = widget.payload ?? {};
   const value = valueFor(payload, getValue);
@@ -53,6 +54,7 @@ export function WidgetRenderer({ widget }: WidgetRendererProps) {
           unit={typeof payload.unit === "string" ? payload.unit : null}
           decimals={typeof payload.decimals === "number" ? payload.decimals : undefined}
           style={widget.style}
+          mode={mode}
         />
       );
 
@@ -73,7 +75,7 @@ export function WidgetRenderer({ widget }: WidgetRendererProps) {
         ];
       });
 
-      return <StatGroup rows={resolvedRows} style={widget.style} />;
+      return <StatGroup rows={resolvedRows} style={widget.style} mode={mode} />;
     }
 
     case "raw-value":
@@ -85,6 +87,7 @@ export function WidgetRenderer({ widget }: WidgetRendererProps) {
           suffix={typeof payload.suffix === "string" ? payload.suffix : null}
           fontSize={typeof payload.fontSize === "number" ? payload.fontSize : undefined}
           style={widget.style}
+          mode={mode}
         />
       );
 
@@ -96,6 +99,7 @@ export function WidgetRenderer({ widget }: WidgetRendererProps) {
           inactiveColor={typeof payload.inactiveColor === "string" ? payload.inactiveColor : undefined}
           label={typeof payload.label === "string" ? payload.label : undefined}
           style={widget.style}
+          mode={mode}
         />
       );
 
@@ -121,6 +125,7 @@ export function WidgetRenderer({ widget }: WidgetRendererProps) {
           zones={configuredZones.length > 0 ? configuredZones : undefined}
           fillDirection={payload.fillDirection === "left-to-right" ? "left-to-right" : "edge-to-center"}
           style={widget.style}
+          mode={mode}
         />
       );
     }
@@ -156,6 +161,7 @@ export function WidgetRenderer({ widget }: WidgetRendererProps) {
           states={configuredStates}
           activeStates={activeStates}
           style={widget.style}
+          mode={mode}
         />
       );
     }
@@ -192,7 +198,7 @@ export function WidgetRenderer({ widget }: WidgetRendererProps) {
             }
           : undefined;
 
-      return <TyresWidget data={data} thresholds={thresholds} style={widget.style} />;
+      return <TyresWidget data={data} thresholds={thresholds} style={widget.style} mode={mode} />;
     }
 
     default:

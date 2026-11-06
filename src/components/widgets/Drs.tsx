@@ -1,5 +1,5 @@
 import type { CSSProperties } from "react";
-import type { StatBoxStyle } from "./StatBox";
+import type { StatBoxStyle, WidgetMode } from "./StatBox";
 import "./hud-widgets.css";
 
 export interface DrsProps {
@@ -9,6 +9,7 @@ export interface DrsProps {
   label?: string;
   style?: StatBoxStyle;
   className?: string;
+  mode?: WidgetMode;
 }
 
 export function Drs({
@@ -18,6 +19,7 @@ export function Drs({
   label = "DRS",
   style,
   className,
+  mode = "display",
 }: DrsProps) {
   const cssVars = {
     "--box-bg": active ? activeColor : inactiveColor,
@@ -27,7 +29,7 @@ export function Drs({
   } as CSSProperties;
 
   return (
-    <div className={`hud-box drs-widget ${className ?? ""}`} style={cssVars}>
+    <div className={`hud-box drs-widget ${className ?? ""}`} style={cssVars} data-mode={mode}>
       <span className="drs-widget__label">{label}</span>
     </div>
   );

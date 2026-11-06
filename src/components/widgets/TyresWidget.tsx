@@ -1,5 +1,5 @@
 import type { CSSProperties } from "react";
-import type { StatBoxStyle } from "./StatBox";
+import type { StatBoxStyle, WidgetMode } from "./StatBox";
 import "./hud-widgets.css";
 
 export type Corner = "FL" | "FR" | "RL" | "RR";
@@ -21,6 +21,7 @@ export interface TyresWidgetProps {
   thresholds?: TyreThresholds;
   style?: StatBoxStyle;
   className?: string;
+  mode?: WidgetMode;
 }
 
 const DEFAULT_THRESHOLDS: TyreThresholds = { cold: 70, optimal: 95, hot: 110 };
@@ -47,6 +48,7 @@ export function TyresWidget({
   thresholds = DEFAULT_THRESHOLDS,
   style,
   className,
+  mode = "display",
 }: TyresWidgetProps) {
   const merged = { ...DEFAULT_STYLE, ...style };
   const cssVars = {
@@ -57,7 +59,7 @@ export function TyresWidget({
   } as CSSProperties;
 
   return (
-    <div className={`tyres-widget ${className ?? ""}`} style={cssVars}>
+    <div className={`tyres-widget ${className ?? ""}`} style={cssVars} data-mode={mode}>
       <span className="hud-box__label">TYRES</span>
       <div className="tyres-widget__grid">
         {CORNER_ORDER.map((corner) => {

@@ -1,5 +1,5 @@
 import type { CSSProperties } from "react";
-import type { StatBoxStyle } from "./StatBox";
+import type { StatBoxStyle, WidgetMode } from "./StatBox";
 import "./hud-widgets.css";
 
 export interface ActivationState {
@@ -16,6 +16,7 @@ export interface ActivationLightsProps {
   activeStates: Record<string, boolean>;
   style?: StatBoxStyle;
   className?: string;
+  mode?: WidgetMode;
 }
 
 export function ActivationLights({
@@ -25,6 +26,7 @@ export function ActivationLights({
   activeStates,
   style,
   className,
+  mode = "display",
 }: ActivationLightsProps) {
   const activeState = priority.find((stateName) => activeStates[stateName]);
   const selectedState = activeState ? states[activeState] : undefined;
@@ -37,7 +39,7 @@ export function ActivationLights({
   } as CSSProperties;
 
   return (
-    <div className={`activation-lights ${className ?? ""}`} style={cssVars}>
+    <div className={`activation-lights ${className ?? ""}`} style={cssVars} data-mode={mode}>
       {Array.from({ length: safeLampCount }, (_, index) => (
         <span
           key={index}
