@@ -11,8 +11,8 @@
       {
         "id": "w_best_lap",
         "type": "stat-box",
-        "x": 120,
-        "y": 40,
+        "x": 462,
+        "y": 416,
         "w": 180,
         "h": 70,
         "zIndex": 2,
@@ -28,6 +28,211 @@
           "label": "BEST LAP",
           "unit": null,
           "decimals": 3
+        }
+      },
+      {
+        "id": "w_engine_stats",
+        "type": "stat-group",
+        "x": 137,
+        "y": 150,
+        "w": 240,
+        "h": 150,
+        "zIndex": 2,
+        "style": {
+          "boxBg": "#141820",
+          "boxBorder": "#2a3340",
+          "labelColor": "#a8b2c0",
+          "valueColor": "#ffffff"
+        },
+        "payload": {
+          "rows": [
+            {
+              "dataKey": "engine.oilTemp",
+              "label": "OIL TEMP",
+              "unit": "°C"
+            },
+            {
+              "dataKey": "engine.oilPressure",
+              "label": "OIL PRESS",
+              "unit": "bar",
+              "decimals": 1
+            },
+            {
+              "dataKey": "engine.waterTemp",
+              "label": "WATER TEMP",
+              "unit": "°C"
+            },
+            {
+              "dataKey": "engine.waterPressure",
+              "label": "WATER PRESS",
+              "unit": "bar",
+              "decimals": 1
+            }
+          ]
+        }
+      },
+      {
+        "id": "w_speed",
+        "type": "raw-value",
+        "x": 40,
+        "y": 320,
+        "w": 180,
+        "h": 70,
+        "zIndex": 2,
+        "style": {
+          "boxBg": "#141820",
+          "boxBorder": "#2a3340",
+          "labelColor": "#a8b2c0",
+          "valueColor": "#ffffff"
+        },
+        "payload": {
+          "dataKey": "speed",
+          "suffix": " km/h",
+          "fontSize": 48
+        }
+      },
+      {
+        "id": "w_drs",
+        "type": "drs",
+        "x": 360,
+        "y": 318,
+        "w": 113,
+        "h": 55,
+        "zIndex": 2,
+        "style": {
+          "boxBg": "#141820",
+          "boxBorder": "#2a3340",
+          "labelColor": "#a8b2c0",
+          "valueColor": "#ffffff"
+        },
+        "payload": {
+          "dataKey": "drs.active",
+          "activeColor": "#2ee66b",
+          "inactiveColor": "#2a3340",
+          "label": "DRS"
+        }
+      },
+      {
+        "id": "w_rpm_bar",
+        "type": "rpm-bar",
+        "x": 241,
+        "y": 10,
+        "w": 522,
+        "h": 60,
+        "zIndex": 2,
+        "style": {
+          "boxBg": "#141820",
+          "boxBorder": "#2a3340",
+          "labelColor": "#a8b2c0",
+          "valueColor": "#ffffff"
+        },
+        "payload": {
+          "dataKey": "rpm",
+          "redlineDataKey": "redline",
+          "style": "lamp",
+          "fillDirection": "edge-to-center",
+          "segments": 16,
+          "zones": [
+            {
+              "upTo": 0.6,
+              "color": "#2ee66b"
+            },
+            {
+              "upTo": 0.85,
+              "color": "#ffd400"
+            },
+            {
+              "upTo": 1,
+              "color": "#ff3b30"
+            }
+          ]
+        }
+      },
+      {
+        "id": "w_activation",
+        "type": "activation-lights",
+        "x": 896,
+        "y": 75,
+        "w": 41,
+        "h": 176,
+        "zIndex": 2,
+        "style": {
+          "boxBg": "#141820",
+          "boxBorder": "#2a3340",
+          "labelColor": "#a8b2c0",
+          "valueColor": "#ffffff"
+        },
+        "payload": {
+          "lampCount": 4,
+          "priority": [
+            "pit",
+            "abs",
+            "tc"
+          ],
+          "states": {
+            "pit": {
+              "color": "#ffd400",
+              "blink": true,
+              "blinkMs": 400,
+              "dataKey": "pit.active"
+            },
+            "abs": {
+              "color": "#ff3b30",
+              "blink": false,
+              "dataKey": "abs"
+            },
+            "tc": {
+              "color": "#a855f7",
+              "blink": false,
+              "dataKey": "tc"
+            }
+          }
+        }
+      },
+      {
+        "id": "w_tyres",
+        "type": "tyres",
+        "x": 723,
+        "y": 281,
+        "w": 220,
+        "h": 223,
+        "zIndex": 2,
+        "style": {
+          "boxBg": "#141820",
+          "boxBorder": "#2a3340",
+          "labelColor": "#a8b2c0",
+          "valueColor": "#ffffff"
+        },
+        "payload": {
+          "positions": [
+            "FL",
+            "FR",
+            "RL",
+            "RR"
+          ],
+          "dataKeys": {
+            "FL": {
+              "psi": "tyres.FL.psi",
+              "temp": "tyres.FL.temp"
+            },
+            "FR": {
+              "psi": "tyres.FR.psi",
+              "temp": "tyres.FR.temp"
+            },
+            "RL": {
+              "psi": "tyres.RL.psi",
+              "temp": "tyres.RL.temp"
+            },
+            "RR": {
+              "psi": "tyres.RR.psi",
+              "temp": "tyres.RR.temp"
+            }
+          },
+          "tempThresholds": {
+            "cold": 70,
+            "optimal": 95,
+            "hot": 110
+          }
         }
       }
     ]

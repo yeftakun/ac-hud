@@ -43,6 +43,8 @@ Supaya transisi ke WebSocket nanti gak perlu nyentuh widget sama sekali, data wa
 | MVP1 | load/poll `capture.json` |
 | Final | subscribe WebSocket Server |
 
+`capture.json` perlu field boolean terpisah untuk status aktif (`abs.active`, `tc.active`, `pit.active`) di luar field nilai level (`abs`, `tc`) — lihat payload `activation-lights` di §5.3.
+
 ## 3. Tech Stack
 
 | Layer | Pilihan | Alasan |
@@ -159,12 +161,13 @@ Supaya transisi ke WebSocket nanti gak perlu nyentuh widget sama sekali, data wa
   "lampCount": 4,
   "priority": ["pit", "abs", "tc"],
   "states": {
-    "pit": { "color": "#ffd400", "blink": true, "blinkMs": 400 },
-    "abs": { "color": "#ff3b30", "blink": false },
-    "tc":  { "color": "#a855f7", "blink": false }
+    "pit": { "dataKey": "pit.active", "color": "#ffd400", "blink": true, "blinkMs": 400 },
+    "abs": { "dataKey": "abs.active", "color": "#ff3b30", "blink": false },
+    "tc":  { "dataKey": "tc.active",  "color": "#a855f7", "blink": false }
   }
 }
 ```
+- `dataKey` tiap state **wajib** menunjuk ke field boolean khusus "aktif" (`abs.active`, `tc.active`, `pit.active`), BUKAN ke field nilai level (`abs`, `tc` — itu angka level untuk widget lain, bukan indikator aktif/nonaktif).
 - Keempat lampu selalu menyala warna yang sama (bukan 4 kondisi berbeda per lampu).
 - `priority` nentuin warna yang menang kalau >1 kondisi aktif bareng (mis. ABS + PIT aktif bersamaan saat masuk pit lane dengan rem keras).
 - PIT pakai CSS `@keyframes blink`, bukan JS interval — lebih ringan.
@@ -224,4 +227,5 @@ Supaya transisi ke WebSocket nanti gak perlu nyentuh widget sama sekali, data wa
 
 - **Hidden overlay**: sudah disepakati bentuknya *menimpa* tampilan utama (bukan slot statis terpisah), tapi skema widget untuk kategori ini (area yang ketutup, durasi/transisi per event, prioritas antar overlay) belum di-breakdown — perlu sesi terpisah.
 - **Daftar lengkap event hidden overlay** (pit limiter, flag, setup change notif, dll.) belum di-final-kan item per item.
+- Seed `profile_001` baru punya 1 widget representatif per type (hasil Prompt 8) — field lain di `capture.json` (gear, delta, lap.counter/last/est, position, fuel, abs, tc, bb) belum punya widget sendiri.
 - Threshold suhu ban di §5.3 masih contoh, perlu disesuaikan ke compound ban yang dipakai.
