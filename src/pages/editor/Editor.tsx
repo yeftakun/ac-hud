@@ -261,6 +261,8 @@ export function Editor() {
   const mode: WidgetMode = "edit";
   const selectedStyle = { ...STYLE_DEFAULTS, ...selectedWidget?.style };
   const selectedPayload = selectedWidget?.payload ?? {};
+  const regularWidgets = profile.widgets.filter((widget) => widget.type !== "overlay-event");
+  const overlayWidgets = profile.widgets.filter((widget) => widget.type === "overlay-event");
 
   return (
     <main style={pageStyle}>
@@ -316,7 +318,8 @@ export function Editor() {
           }}
           onClick={() => setSelectedId(null)}
         >
-          {profile.widgets.map((widget) => {
+          <div style={{ position: "absolute", inset: 0, zIndex: 0 }}>
+          {regularWidgets.map((widget) => {
             const isSelected = widget.id === selectedId;
             const widgetStyle = {
               position: "absolute",
@@ -344,6 +347,12 @@ export function Editor() {
               </div>
             );
           })}
+          </div>
+          <div style={{ position: "absolute", inset: 0, zIndex: 1000, pointerEvents: "none" }}>
+            {overlayWidgets.map((widget) => (
+              <WidgetRenderer key={widget.id} widget={widget} mode={mode} />
+            ))}
+          </div>
 
           <Moveable
             target={selectedElement}

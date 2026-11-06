@@ -100,6 +100,9 @@ export function Display({ profileId }: DisplayProps) {
   if (loading) return <Status message="Loading display profile…" />;
   if (error || !profile) return <Status message={`Unable to load profile: ${error ?? "Unknown error"}`} />;
 
+  const regularWidgets = profile.widgets.filter((widget) => widget.type !== "overlay-event");
+  const overlayWidgets = profile.widgets.filter((widget) => widget.type === "overlay-event");
+
   return (
     <main style={displayPageStyle}>
       <div style={{ width: CANVAS_WIDTH * scale, height: CANVAS_HEIGHT * scale }}>
@@ -114,21 +117,28 @@ export function Display({ profileId }: DisplayProps) {
             transformOrigin: "top left",
           }}
         >
-          {profile.widgets.map((widget) => (
-            <div
-              key={widget.id}
-              style={{
-                position: "absolute",
-                left: widget.x,
-                top: widget.y,
-                width: widget.w,
-                height: widget.h,
-                zIndex: widget.zIndex,
-              }}
-            >
-              <WidgetRenderer widget={widget} mode="display" />
-            </div>
-          ))}
+          <div className="display-widget-layer" style={{ position: "absolute", inset: 0, zIndex: 0 }}>
+            {regularWidgets.map((widget) => (
+              <div
+                key={widget.id}
+                style={{
+                  position: "absolute",
+                  left: widget.x,
+                  top: widget.y,
+                  width: widget.w,
+                  height: widget.h,
+                  zIndex: widget.zIndex,
+                }}
+              >
+                <WidgetRenderer widget={widget} mode="display" />
+              </div>
+            ))}
+          </div>
+          <div className="display-overlay-layer" style={{ position: "absolute", inset: 0, zIndex: 1000, pointerEvents: "none" }}>
+            {overlayWidgets.map((widget) => (
+              <WidgetRenderer key={widget.id} widget={widget} mode="display" />
+            ))}
+          </div>
         </div>
       </div>
       <button type="button" style={fullscreenButtonStyle} onClick={() => void enterFullscreen()}>

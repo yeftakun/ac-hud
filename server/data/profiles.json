@@ -450,6 +450,31 @@
             "hot": 110
           }
         }
+      },
+      {
+        "id": "ov_pit_limiter",
+        "type": "overlay-event",
+        "x": 250,
+        "y": 190,
+        "w": 460,
+        "h": 100,
+        "zIndex": 100,
+        "style": {
+          "boxBg": "rgba(0, 0, 0, 0.85)",
+          "boxBorder": "#ffd400",
+          "labelColor": "#ffd400",
+          "valueColor": "#ffd400"
+        },
+        "payload": {
+          "triggerKey": "pit.active",
+          "triggerWhen": true,
+          "label": "PIT LIMITER",
+          "coverage": "partial",
+          "persistWhileActive": true,
+          "autoDismissMs": null,
+          "transition": "fade",
+          "transitionMs": 250
+        }
       }
     ]
   }

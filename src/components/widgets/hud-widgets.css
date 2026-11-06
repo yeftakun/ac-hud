@@ -227,6 +227,37 @@
   }
 }
 
+/* ---- Overlay event ---- */
+
+.overlay-event {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-sizing: border-box;
+  border: 2px solid var(--overlay-border, #ffd400);
+  border-radius: 12px;
+  background: var(--overlay-bg, rgba(0, 0, 0, 0.85));
+  color: var(--overlay-value, #ffd400);
+  font-size: 34px;
+  font-weight: 900;
+  letter-spacing: 3px;
+  text-transform: uppercase;
+  transition: opacity var(--overlay-transition-ms, 250ms) ease;
+  pointer-events: none;
+}
+
+.overlay-event--partial {
+  position: absolute;
+}
+
+.overlay-event--full {
+  position: fixed;
+  inset: 0;
+  width: 100vw;
+  height: 100vh;
+  border-radius: 0;
+}
+
 /* ---- Tyres widget ---- */
 
 .tyres-widget {

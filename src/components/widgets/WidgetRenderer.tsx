@@ -2,6 +2,7 @@ import type { CSSProperties } from "react";
 import { useTelemetry } from "../../hooks/useTelemetry";
 import { ActivationLights, type ActivationState } from "./ActivationLights";
 import { Drs } from "./Drs";
+import { OverlayEvent } from "./OverlayEvent";
 import { RawValue } from "./RawValue";
 import { RpmBar, type RpmZone } from "./RpmBar";
 import { StatBox, type StatBoxStyle, type WidgetMode } from "./StatBox";
@@ -200,6 +201,26 @@ export function WidgetRenderer({ widget, mode = "display" }: WidgetRendererProps
 
       return <TyresWidget data={data} thresholds={thresholds} style={widget.style} mode={mode} />;
     }
+
+    case "overlay-event":
+      return (
+        <OverlayEvent
+          triggerKey={typeof payload.triggerKey === "string" ? payload.triggerKey : ""}
+          triggerWhen={payload.triggerWhen}
+          label={typeof payload.label === "string" ? payload.label : widget.id}
+          coverage={payload.coverage === "full" ? "full" : "partial"}
+          x={widget.x}
+          y={widget.y}
+          w={widget.w}
+          h={widget.h}
+          zIndex={widget.zIndex ?? 100}
+          persistWhileActive={payload.persistWhileActive !== false}
+          autoDismissMs={typeof payload.autoDismissMs === "number" ? payload.autoDismissMs : null}
+          transitionMs={typeof payload.transitionMs === "number" ? payload.transitionMs : undefined}
+          style={widget.style}
+          mode={mode}
+        />
+      );
 
     default:
       return (
