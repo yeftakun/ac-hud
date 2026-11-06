@@ -8,12 +8,13 @@ const CONFIG_API_URL = "http://localhost:3001";
 const PROFILE_ID = "profile_001";
 const CANVAS_WIDTH = 960;
 const CANVAS_HEIGHT = 540;
+const CANVAS_BACKGROUND = "#11151c";
 
 interface Profile {
   schemaVersion: number;
   id: string;
   name: string;
-  canvas: { w: number; h: number };
+  canvas: { w: number; h: number; background?: string };
   widgets: WidgetConfig[];
 }
 
@@ -139,6 +140,13 @@ function createWidget(type: AddableWidgetType, dataKey: string, widgets: WidgetC
   return { id, type, ...position, w, h, zIndex: 2, style, payload };
 }
 
+function defaultValueFontSize(type: string): number | null {
+  if (type === "stat-box") return 32;
+  if (type === "stat-group") return 20;
+  if (type === "raw-value") return 48;
+  return null;
+}
+
 export function Editor() {
   const [profile, setProfile] = useState<Profile | null>(null);
   const [selectedId, setSelectedId] = useState<string | null>(null);
@@ -223,6 +231,36 @@ export function Editor() {
     });
   }
 
+  function updateSelectedFontSize(value: string) {
+    if (!selectedWidget) return;
+    const fontSize = Number(value);
+    if (!Number.isFinite(fontSize) || fontSize <= 0) return;
+    updateWidget(selectedWidget.id, {
+      payload: { ...selectedWidget.payload, fontSize },
+    });
+  }
+
+  function updateSelectedZIndex(value: string) {
+    if (!selectedWidget) return;
+    const zIndex = Number(value);
+    if (!Number.isInteger(zIndex)) return;
+    updateWidget(selectedWidget.id, { zIndex });
+  }
+
+  function updateProfileName(value: string) {
+    setProfile((current) => current ? { ...current, name: value } : current);
+  }
+
+  function updateCanvasDimension(key: "w" | "h", value: string) {
+    const dimension = Number(value);
+    if (!Number.isInteger(dimension) || dimension < 320 || dimension > 4000) return;
+    setProfile((current) => current ? { ...current, canvas: { ...current.canvas, [key]: dimension } } : current);
+  }
+
+  function updateCanvasBackground(value: string) {
+    setProfile((current) => current ? { ...current, canvas: { ...current.canvas, background: value } } : current);
+  }
+
   function addWidget() {
     setProfile((current) => {
       if (!current) return current;
@@ -263,6 +301,9 @@ export function Editor() {
   }
 
   const mode: WidgetMode = "edit";
+  const canvasWidth = profile.canvas.w || CANVAS_WIDTH;
+  const canvasHeight = profile.canvas.h || CANVAS_HEIGHT;
+  const canvasBackground = profile.canvas.background || CANVAS_BACKGROUND;
   const selectedStyle = { ...STYLE_DEFAULTS, ...selectedWidget?.style };
   const selectedPayload = selectedWidget?.payload ?? {};
   const regularWidgets = profile.widgets.filter((widget) => widget.type !== "overlay-event");
@@ -314,10 +355,10 @@ export function Editor() {
           style={{
             position: "relative",
             flex: "0 0 auto",
-            width: CANVAS_WIDTH,
-            height: CANVAS_HEIGHT,
+            width: canvasWidth,
+            height: canvasHeight,
             overflow: "hidden",
-            background: "#11151c",
+            background: canvasBackground,
             border: "1px solid #2a3340",
           }}
           onClick={() => setSelectedId(null)}
@@ -377,6 +418,29 @@ export function Editor() {
         </div>
 
         <aside style={sidebarStyle}>
+          <section>
+            <h2 style={{ marginTop: 0 }}>Global properties</h2>
+            <label style={fieldStyle}>
+              Profile name
+              <input value={profile.name} onChange={(event) => updateProfileName(event.target.value)} />
+            </label>
+            <div style={dimensionGridStyle}>
+              <label style={fieldStyle}>
+                Canvas width
+                <input type="number" min={320} max={4000} step={1} value={canvasWidth} onChange={(event) => updateCanvasDimension("w", event.target.value)} />
+              </label>
+              <label style={fieldStyle}>
+                Canvas height
+                <input type="number" min={320} max={4000} step={1} value={canvasHeight} onChange={(event) => updateCanvasDimension("h", event.target.value)} />
+              </label>
+            </div>
+            <label style={colorFieldStyle}>
+              <span>Canvas background</span>
+              <input type="color" value={canvasBackground} onChange={(event) => updateCanvasBackground(event.target.value)} />
+            </label>
+          </section>
+
+          <div style={{ marginTop: 26, paddingTop: 20, borderTop: "1px solid #2a3340" }}>
           {selectedWidget ? (
             <>
               <h2 style={{ marginTop: 0 }}>Widget properties</h2>
@@ -402,6 +466,34 @@ export function Editor() {
                 </label>
               ) : null}
 
+              {defaultValueFontSize(selectedWidget.type) !== null ? (
+                <label style={fieldStyle}>
+                  Value size (px)
+                  <input
+                    type="number"
+                    min={8}
+                    max={200}
+                    step={1}
+                    value={typeof selectedPayload.fontSize === "number"
+                      ? selectedPayload.fontSize
+                      : defaultValueFontSize(selectedWidget.type) ?? 32}
+                    onChange={(event) => updateSelectedFontSize(event.target.value)}
+                  />
+                </label>
+              ) : null}
+
+              <label style={fieldStyle}>
+                Overlay index (z-index)
+                <input
+                  type="number"
+                  min={0}
+                  max={9999}
+                  step={1}
+                  value={selectedWidget.zIndex ?? 2}
+                  onChange={(event) => updateSelectedZIndex(event.target.value)}
+                />
+              </label>
+
               <div style={{ marginTop: 20, fontWeight: 700 }}>Colors</div>
               {COLOR_FIELDS.map(({ key, label }) => (
                 <label key={key} style={colorFieldStyle}>
@@ -417,6 +509,7 @@ export function Editor() {
           ) : (
             <div style={mutedStyle}>Select a widget to edit its properties.</div>
           )}
+          </div>
           {saveState === "saved" ? <div style={successStyle}>Saved.</div> : null}
           {saveState === "error" ? <div style={errorStyle}>Save failed.</div> : null}
         </aside>
@@ -488,6 +581,12 @@ const fieldStyle: CSSProperties = {
   marginTop: 16,
   color: "#a8b2c0",
   fontSize: 13,
+};
+
+const dimensionGridStyle: CSSProperties = {
+  display: "grid",
+  gridTemplateColumns: "1fr 1fr",
+  gap: 10,
 };
 
 const colorFieldStyle: CSSProperties = {

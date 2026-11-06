@@ -20,6 +20,7 @@ export interface StatBoxProps {
   unit?: string | null;
   decimals?: number;
   format?: StatBoxValueFormat;
+  fontSize?: number;
   style?: StatBoxStyle;
   className?: string;
   mode?: WidgetMode;
@@ -51,6 +52,7 @@ export function StatBox({
   unit,
   decimals,
   format = "decimal",
+  fontSize = 32,
   style,
   className,
   mode = "display",
@@ -61,6 +63,7 @@ export function StatBox({
     "--box-border": merged.boxBorder,
     "--label-color": merged.labelColor,
     "--value-color": merged.valueColor,
+    "--statbox-value-size": `${fontSize}px`,
   } as CSSProperties;
 
   const displayValue = formatValue(value, decimals, format);

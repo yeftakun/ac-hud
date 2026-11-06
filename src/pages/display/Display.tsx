@@ -8,7 +8,7 @@ const CANVAS_HEIGHT = 540;
 interface Profile {
   id: string;
   name: string;
-  canvas: { w: number; h: number };
+  canvas: { w: number; h: number; background?: string };
   widgets: WidgetConfig[];
 }
 
@@ -21,7 +21,7 @@ interface WakeLockLike {
 }
 
 export interface DisplayProps {
-  profileId: string;
+  profileId?: string;
 }
 
 export function Display({ profileId }: DisplayProps) {
@@ -34,8 +34,9 @@ export function Display({ profileId }: DisplayProps) {
     const controller = new AbortController();
 
     async function loadProfile() {
+      const activeProfileId = profileId ?? localStorage.getItem("ac-hud.active-profile") ?? "profile_001";
       try {
-        const response = await fetch(`${CONFIG_API_URL}/configs/${encodeURIComponent(profileId)}`, {
+        const response = await fetch(`${CONFIG_API_URL}/configs/${encodeURIComponent(activeProfileId)}`, {
           signal: controller.signal,
         });
         if (!response.ok) throw new Error(`Config API returned ${response.status}`);
@@ -112,7 +113,7 @@ export function Display({ profileId }: DisplayProps) {
             width: CANVAS_WIDTH,
             height: CANVAS_HEIGHT,
             overflow: "hidden",
-            background: "#11151c",
+            background: profile.canvas.background ?? "#11151c",
             transform: `scale(${scale})`,
             transformOrigin: "top left",
           }}

@@ -13,6 +13,7 @@ export interface StatGroupProps {
   rows: StatGroupRow[];
   style?: StatBoxStyle;
   className?: string;
+  fontSize?: number;
   mode?: WidgetMode;
 }
 
@@ -31,13 +32,14 @@ function formatValue(value: StatGroupRow["value"], decimals?: number): string {
   return String(value);
 }
 
-export function StatGroup({ rows, style, className, mode = "display" }: StatGroupProps) {
+export function StatGroup({ rows, style, className, fontSize = 20, mode = "display" }: StatGroupProps) {
   const merged = { ...DEFAULT_STYLE, ...style };
   const cssVars = {
     "--box-bg": merged.boxBg,
     "--box-border": merged.boxBorder,
     "--label-color": merged.labelColor,
     "--value-color": merged.valueColor,
+    "--stat-group-value-size": `${fontSize}px`,
   } as CSSProperties;
 
   return (

@@ -4,7 +4,8 @@ import { useEffect, useState } from "react";
 import "./index.css";
 import { Editor } from "./pages/editor/Editor";
 import { Display } from "./pages/display/Display";
-import { ProfilePicker } from "./pages/display/ProfilePicker";
+import { Home } from "./pages/Home";
+import "./pages/home.css";
 
 function navigate(path: string) {
   window.history.pushState({}, "", path);
@@ -20,15 +21,9 @@ function App() {
     return () => window.removeEventListener("popstate", handlePopState);
   }, []);
 
-  const displayMatch = path.match(/^\/display\/([^/]+)$/);
-  if (displayMatch) return <Display profileId={decodeURIComponent(displayMatch[1])} />;
+  if (path === "/display") return <Display />;
   if (path === "/editor") return <Editor />;
-  return (
-    <ProfilePicker
-      onSelect={(profileId) => navigate(`/display/${encodeURIComponent(profileId)}`)}
-      onOpenEditor={() => navigate("/editor")}
-    />
-  );
+  return <Home onOpenDisplay={() => navigate("/display")} onOpenEditor={() => navigate("/editor")} />;
 }
 
 createRoot(document.getElementById("root")!).render(

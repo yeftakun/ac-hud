@@ -55,6 +55,7 @@ export function WidgetRenderer({ widget, mode = "display" }: WidgetRendererProps
           unit={typeof payload.unit === "string" ? payload.unit : null}
           decimals={typeof payload.decimals === "number" ? payload.decimals : undefined}
           format={payload.format === "laptime" ? ("laptime" satisfies StatBoxValueFormat) : "decimal"}
+          fontSize={typeof payload.fontSize === "number" ? payload.fontSize : undefined}
           style={widget.style}
           mode={mode}
         />
@@ -77,7 +78,14 @@ export function WidgetRenderer({ widget, mode = "display" }: WidgetRendererProps
         ];
       });
 
-      return <StatGroup rows={resolvedRows} style={widget.style} mode={mode} />;
+      return (
+        <StatGroup
+          rows={resolvedRows}
+          style={widget.style}
+          fontSize={typeof payload.fontSize === "number" ? payload.fontSize : undefined}
+          mode={mode}
+        />
+      );
     }
 
     case "raw-value":

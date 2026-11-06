@@ -2,7 +2,7 @@
   {
     "schemaVersion": 1,
     "id": "profile_001",
-    "name": "GT3 Endurance Layout",
+    "name": "GT3",
     "canvas": {
       "w": 960,
       "h": 540
@@ -11,10 +11,10 @@
       {
         "id": "w_rpm_bar",
         "type": "rpm-bar",
-        "x": 20,
-        "y": 20,
-        "w": 600,
-        "h": 50,
+        "x": 231,
+        "y": 11,
+        "w": 497,
+        "h": 59,
         "zIndex": 2,
         "style": {
           "boxBg": "#141820",
@@ -415,7 +415,7 @@
         "y": 450,
         "w": 100,
         "h": 65,
-        "zIndex": 2,
+        "zIndex": 3,
         "style": {
           "boxBg": "#141820",
           "boxBorder": "#2a3340",
@@ -433,8 +433,8 @@
       {
         "id": "w_tyres",
         "type": "tyres",
-        "x": 751,
-        "y": 287,
+        "x": 761,
+        "y": 314,
         "w": 148,
         "h": 203,
         "zIndex": 2,
