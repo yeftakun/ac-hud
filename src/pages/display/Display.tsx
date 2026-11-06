@@ -28,6 +28,7 @@ export interface DisplayProps {
 export function Display({ profileId }: DisplayProps) {
   const [profile, setProfile] = useState<Profile | null>(null);
   const [scale, setScale] = useState(1);
+  const [isFullscreen, setIsFullscreen] = useState(() => Boolean(document.fullscreenElement));
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -93,6 +94,15 @@ export function Display({ profileId }: DisplayProps) {
     };
   }, []);
 
+  useEffect(() => {
+    function handleFullscreenChange() {
+      setIsFullscreen(Boolean(document.fullscreenElement));
+    }
+
+    document.addEventListener("fullscreenchange", handleFullscreenChange);
+    return () => document.removeEventListener("fullscreenchange", handleFullscreenChange);
+  }, []);
+
   async function enterFullscreen() {
     if (!document.fullscreenElement && document.documentElement.requestFullscreen) {
       await document.documentElement.requestFullscreen();
@@ -144,9 +154,11 @@ export function Display({ profileId }: DisplayProps) {
           </div>
         </div>
       </div>
-      <button type="button" style={fullscreenButtonStyle} onClick={() => void enterFullscreen()}>
-        Fullscreen
-      </button>
+      {!isFullscreen && (
+        <button type="button" style={fullscreenButtonStyle} onClick={() => void enterFullscreen()}>
+          Fullscreen
+        </button>
+      )}
     </main>
   );
 }
