@@ -58,13 +58,15 @@ export function Display({ profileId }: DisplayProps) {
 
   useEffect(() => {
     function updateScale() {
-      setScale(Math.min(window.innerWidth / CANVAS_WIDTH, window.innerHeight / CANVAS_HEIGHT));
+      const width = profile?.canvas.w || CANVAS_WIDTH;
+      const height = profile?.canvas.h || CANVAS_HEIGHT;
+      setScale(Math.min(window.innerWidth / width, window.innerHeight / height));
     }
 
     updateScale();
     window.addEventListener("resize", updateScale);
     return () => window.removeEventListener("resize", updateScale);
-  }, []);
+  }, [profile?.canvas.h, profile?.canvas.w]);
 
   useEffect(() => {
     const wakeLockApi = (navigator as Navigator & { wakeLock?: WakeLockLike }).wakeLock;
@@ -114,15 +116,17 @@ export function Display({ profileId }: DisplayProps) {
 
   const regularWidgets = profile.widgets.filter((widget) => widget.type !== "overlay-event");
   const overlayWidgets = profile.widgets.filter((widget) => widget.type === "overlay-event");
+  const canvasWidth = profile.canvas.w || CANVAS_WIDTH;
+  const canvasHeight = profile.canvas.h || CANVAS_HEIGHT;
 
   return (
     <main style={displayPageStyle}>
-      <div style={{ width: CANVAS_WIDTH * scale, height: CANVAS_HEIGHT * scale }}>
+      <div style={{ width: canvasWidth * scale, height: canvasHeight * scale }}>
         <div
           style={{
             position: "relative",
-            width: CANVAS_WIDTH,
-            height: CANVAS_HEIGHT,
+            width: canvasWidth,
+            height: canvasHeight,
             overflow: "hidden",
             background: profile.canvas.background ?? "#11151c",
             ...getFontStyle(profile.canvas.fontFamily),

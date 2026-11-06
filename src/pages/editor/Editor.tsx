@@ -104,6 +104,7 @@ interface WidgetPreset {
 const WIDGET_LIBRARY: WidgetPreset[] = [
   { dataKey: "speed", type: "raw-value" },
   { dataKey: "gear", type: "raw-value" },
+  { dataKey: "rpm", type: "raw-value" },
   { dataKey: "rpm", type: "rpm-bar" },
   { dataKey: "redline", type: "stat-box" },
   { dataKey: "throttle", type: "pedal-bar" },
@@ -395,6 +396,15 @@ export function Editor() {
     if (!Number.isFinite(fontSize) || fontSize <= 0) return;
     updateWidget(selectedWidget.id, {
       payload: { ...selectedWidget.payload, fontSize },
+    });
+  }
+
+  function updateSelectedRpmRedline(value: string) {
+    if (!selectedWidget || selectedWidget.type !== "rpm-bar") return;
+    const redline = Number(value);
+    if (!Number.isFinite(redline) || redline < 1000 || redline > 20000) return;
+    updateWidget(selectedWidget.id, {
+      payload: { ...selectedWidget.payload, redline },
     });
   }
 
@@ -778,6 +788,20 @@ export function Editor() {
                 </>
               ) : null}
 
+              {selectedWidget.type === "rpm-bar" ? (
+                <label style={fieldStyle}>
+                  RPM limit / redline
+                  <NumericField
+                    min={1000}
+                    max={20000}
+                    step={100}
+                    value={typeof selectedPayload.redline === "number" ? selectedPayload.redline : 8000}
+                    onChange={updateSelectedRpmRedline}
+                  />
+                  <span style={fieldHintStyle}>100% bar tercapai pada nilai RPM ini.</span>
+                </label>
+              ) : null}
+
               {defaultValueFontSize(selectedWidget.type) !== null ? (
                 <label style={fieldStyle}>
                   Value size (px)
@@ -982,6 +1006,12 @@ const fieldStyle: CSSProperties = {
   marginTop: 16,
   color: "#a8b2c0",
   fontSize: 13,
+};
+
+const fieldHintStyle: CSSProperties = {
+  color: "#778292",
+  fontSize: 11,
+  lineHeight: 1.4,
 };
 
 const dimensionGridStyle: CSSProperties = {
