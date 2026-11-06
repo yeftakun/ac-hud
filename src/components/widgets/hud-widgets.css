@@ -1,0 +1,109 @@
+/* Shared look for stat-box style widgets: rounded border with a label
+   that sits centered on the top border line (like a fieldset legend). */
+
+.hud-box {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  height: 100%;
+  border: 2px solid var(--box-border, #2a3340);
+  border-radius: 14px;
+  background: var(--box-bg, #141820);
+  box-sizing: border-box;
+  padding: 14px 10px 10px;
+}
+
+/* The label "breaks" the border line: its background matches the box
+   background, masking the border segment behind the text. */
+.hud-box__label {
+  position: absolute;
+  top: -10px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: var(--box-bg, #141820);
+  padding: 0 8px;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 1.5px;
+  color: var(--label-color, #a8b2c0);
+  white-space: nowrap;
+  text-transform: uppercase;
+}
+
+/* ---- StatBox value ---- */
+
+.statbox__value {
+  display: flex;
+  align-items: baseline;
+  gap: 4px;
+  font-size: 32px;
+  font-weight: 800;
+  color: var(--value-color, #ffffff);
+  line-height: 1;
+}
+
+.statbox__unit {
+  font-size: 13px;
+  font-weight: 600;
+  opacity: 0.7;
+}
+
+/* ---- Tyres widget ---- */
+
+.tyres-widget {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  border: 2px solid var(--box-border, #2a3340);
+  border-radius: 14px;
+  background: var(--box-bg, #141820);
+  padding-top: 8px;
+  box-sizing: border-box;
+  overflow: hidden;
+}
+
+.tyres-widget__grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  grid-template-rows: 1fr 1fr;
+  width: 100%;
+  height: 100%;
+}
+
+.tyres-widget__cell {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 2px;
+  padding: 10px 6px;
+  border-color: var(--box-border, #2a3340);
+  border-style: solid;
+  border-width: 0 1px 1px 0;
+  transition: background-color 0.3s ease;
+}
+
+.tyres-widget__cell:nth-child(2n) {
+  border-right-width: 0;
+}
+
+.tyres-widget__cell:nth-child(n + 3) {
+  border-bottom-width: 0;
+}
+
+.tyres-widget__psi {
+  font-size: 26px;
+  font-weight: 800;
+  color: var(--value-color, #ffffff);
+  line-height: 1;
+}
+
+.tyres-widget__temp {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--value-color, #ffffff);
+  opacity: 0.85;
+}
