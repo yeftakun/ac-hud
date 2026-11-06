@@ -1,8 +1,8 @@
 import { useEffect, useState } from "react";
 import { WidgetRenderer, type WidgetConfig } from "../../components/widgets/WidgetRenderer";
 import { getFontStyle } from "../../lib/fontOptions";
+import { CONFIG_API_URL } from "../../lib/configApi";
 
-const CONFIG_API_URL = "http://localhost:3001";
 const CANVAS_WIDTH = 960;
 const CANVAS_HEIGHT = 540;
 

@@ -1,6 +1,5 @@
 import { useEffect, useState } from "react";
-
-const CONFIG_API_URL = "http://localhost:3001";
+import { CONFIG_API_URL } from "../../lib/configApi";
 
 export interface ProfileSummary {
   id: string;

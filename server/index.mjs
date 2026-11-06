@@ -5,6 +5,7 @@ import { fileURLToPath } from "node:url";
 
 const PORT = Number(process.env.PORT ?? 3001);
 const DATA_FILE = resolve(dirname(fileURLToPath(import.meta.url)), "data/profiles.json");
+const CAPTURE_FILE = resolve(dirname(DATA_FILE), "../../public/capture.json");
 
 const headers = {
   "Content-Type": "application/json; charset=utf-8",
@@ -68,6 +69,41 @@ async function readProfiles() {
   return profiles;
 }
 
+function isTelemetryValue(value) {
+  return value === null || ["number", "boolean", "string"].includes(typeof value);
+}
+
+function validateTelemetry(telemetry) {
+  if (!isObject(telemetry)) return "Telemetry body must be a flat JSON object";
+  if (!Object.values(telemetry).every(isTelemetryValue)) return "Telemetry values must be primitive values";
+  return null;
+}
+
+async function readCapture() {
+  const contents = await readFile(CAPTURE_FILE, "utf8");
+  const telemetry = JSON.parse(contents);
+  if (!isObject(telemetry)) throw new Error("Capture payload must be an object");
+  return telemetry;
+}
+
+let liveTelemetry = null;
+const telemetryClients = new Set();
+
+function telemetryEvent(telemetry) {
+  return `data: ${JSON.stringify(telemetry)}\n\n`;
+}
+
+function broadcastTelemetry(telemetry) {
+  const message = telemetryEvent(telemetry);
+  for (const client of telemetryClients) {
+    try {
+      client.write(message);
+    } catch {
+      telemetryClients.delete(client);
+    }
+  }
+}
+
 async function writeProfiles(profiles) {
   await mkdir(dirname(DATA_FILE), { recursive: true });
   await writeFile(DATA_FILE, `${JSON.stringify(profiles, null, 2)}\n`, "utf8");
@@ -104,6 +140,51 @@ const server = createServer(async (request, response) => {
 
   const url = new URL(request.url ?? "/", `http://${request.headers.host ?? "localhost"}`);
   const parts = url.pathname.split("/").filter(Boolean);
+
+  if (parts[0] === "telemetry") {
+    try {
+      if (request.method === "GET" && parts[1] === "events" && parts.length === 2) {
+        if (!liveTelemetry) liveTelemetry = await readCapture();
+        response.writeHead(200, {
+          ...headers,
+          "Content-Type": "text/event-stream; charset=utf-8",
+          "Cache-Control": "no-cache, no-transform",
+          Connection: "keep-alive",
+          "X-Accel-Buffering": "no",
+        });
+        response.write(`retry: 1000\n${telemetryEvent(liveTelemetry)}`);
+        telemetryClients.add(response);
+        response.on("close", () => telemetryClients.delete(response));
+        return;
+      }
+
+      if (request.method === "GET" && parts.length === 1) {
+        if (!liveTelemetry) liveTelemetry = await readCapture();
+        sendJson(response, 200, liveTelemetry);
+        return;
+      }
+
+      if (request.method === "PUT" && parts.length === 1) {
+        const telemetry = await readRequestBody(request);
+        const validationError = validateTelemetry(telemetry);
+        if (validationError) {
+          sendJson(response, 400, { error: validationError });
+          return;
+        }
+        liveTelemetry = telemetry;
+        broadcastTelemetry(liveTelemetry);
+        sendJson(response, 200, liveTelemetry);
+        return;
+      }
+
+      sendJson(response, 405, { error: "Method not allowed" });
+      return;
+    } catch (error) {
+      console.error(error);
+      sendJson(response, 500, { error: "Telemetry service error" });
+      return;
+    }
+  }
 
   if (parts[0] !== "configs" || parts.length > 2) {
     sendJson(response, 404, { error: "Not found" });
@@ -175,6 +256,6 @@ const server = createServer(async (request, response) => {
   }
 });
 
-server.listen(PORT, () => {
-  console.log(`Config server listening on http://localhost:${PORT}`);
+server.listen(PORT, "0.0.0.0", () => {
+  console.log(`Config server listening on http://0.0.0.0:${PORT}`);
 });

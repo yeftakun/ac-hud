@@ -6,8 +6,8 @@ import { FONT_OPTIONS, getFontStyle, isFontStyleKey } from "../../lib/fontOption
 import type { StatBoxStyle, WidgetMode } from "../../components/widgets/StatBox";
 import { WidgetRenderer, type WidgetConfig } from "../../components/widgets/WidgetRenderer";
 import "./editor.css";
+import { CONFIG_API_URL } from "../../lib/configApi";
 
-const CONFIG_API_URL = "http://localhost:3001";
 const PROFILE_ID = "profile_001";
 const CANVAS_WIDTH = 960;
 const CANVAS_HEIGHT = 540;
@@ -462,6 +462,7 @@ export function Editor() {
         </div>
         <div style={{ display: "flex", gap: 8 }}>
           <button type="button" style={quietButtonStyle} onClick={() => navigateTo("/")}>Home</button>
+          <button type="button" style={quietButtonStyle} onClick={() => navigateTo("/data")}>Data</button>
           <button
             type="button"
             style={quietButtonStyle}

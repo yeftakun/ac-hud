@@ -5,6 +5,7 @@ import "./index.css";
 import { Editor } from "./pages/editor/Editor";
 import { Display } from "./pages/display/Display";
 import { Home } from "./pages/Home";
+import { Data } from "./pages/data/Data";
 import "./pages/home.css";
 
 function navigate(path: string) {
@@ -23,7 +24,8 @@ function App() {
 
   if (path === "/display") return <Display />;
   if (path === "/editor") return <Editor />;
-  return <Home onOpenDisplay={() => navigate("/display")} onOpenEditor={() => navigate("/editor")} />;
+  if (path === "/data") return <Data />;
+  return <Home onOpenDisplay={() => navigate("/display")} onOpenEditor={() => navigate("/editor")} onOpenData={() => navigate("/data")} />;
 }
 
 createRoot(document.getElementById("root")!).render(

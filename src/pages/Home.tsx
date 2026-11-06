@@ -1,13 +1,13 @@
 import { useEffect, useState } from "react";
+import { CONFIG_API_URL } from "../lib/configApi";
 
-const CONFIG_API_URL = "http://localhost:3001";
 const ACTIVE_PROFILE_KEY = "ac-hud.active-profile";
 
 interface ProfileSummary { id: string; name: string; }
 
-interface HomeProps { onOpenDisplay: () => void; onOpenEditor: () => void; }
+interface HomeProps { onOpenDisplay: () => void; onOpenEditor: () => void; onOpenData: () => void; }
 
-export function Home({ onOpenDisplay, onOpenEditor }: HomeProps) {
+export function Home({ onOpenDisplay, onOpenEditor, onOpenData }: HomeProps) {
   const [profiles, setProfiles] = useState<ProfileSummary[]>([]);
   const [activeId, setActiveId] = useState(() => localStorage.getItem(ACTIVE_PROFILE_KEY) ?? "profile_001");
   const [loading, setLoading] = useState(true);
@@ -48,7 +48,7 @@ export function Home({ onOpenDisplay, onOpenEditor }: HomeProps) {
     <main className="home-page">
       <header className="home-header">
         <div className="home-brand"><span className="home-brand__mark">+</span><span>AC HUD</span></div>
-        <div className="home-header__status"><span className="home-status-dot" /> LOCAL CONFIG MODE</div>
+        <div className="home-header__tools"><button type="button" onClick={onOpenData}>Data test</button><span className="home-header__status"><span className="home-status-dot" /> LOCAL CONFIG MODE</span></div>
       </header>
       <section className="home-shell">
         <div className="home-intro">
