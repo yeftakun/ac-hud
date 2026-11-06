@@ -39,7 +39,7 @@ export function RpmBar({
   redline = 8000,
   segments = 16,
   zones = DEFAULT_ZONES,
-  fillDirection = "edge-to-center",
+  fillDirection = "left-to-right",
   style,
   className,
   mode = "display",
@@ -47,13 +47,14 @@ export function RpmBar({
   const safeSegments = Math.max(1, Math.floor(segments));
   const progress = rpm == null || redline <= 0 ? 0 : clamp(rpm / redline, 0, 1);
   const filledSegments = Math.ceil(progress * safeSegments);
+  const atRedline = progress >= 1;
   const cssVars = {
     "--box-bg": style?.boxBg ?? "#141820",
     "--box-border": style?.boxBorder ?? "#2a3340",
   } as CSSProperties;
 
   return (
-    <div className={`rpm-bar ${className ?? ""}`} style={cssVars} data-mode={mode}>
+    <div className={`rpm-bar${atRedline ? " rpm-bar--redline" : ""} ${className ?? ""}`} style={cssVars} data-mode={mode}>
       <div className="rpm-bar__segments" aria-label="RPM">
         {Array.from({ length: safeSegments }, (_, index) => {
           const isFilled =
@@ -65,9 +66,9 @@ export function RpmBar({
           return (
             <span
               key={index}
-              className={`rpm-bar__segment${isFilled ? " rpm-bar__segment--filled" : ""}`}
-              style={{
-                backgroundColor: isFilled ? colorForProgress(segmentProgress, zones) : undefined,
+            className={`rpm-bar__segment${isFilled ? " rpm-bar__segment--filled" : ""}${atRedline ? " rpm-bar__segment--redline" : ""}`}
+            style={{
+                backgroundColor: atRedline ? "#ffffff" : isFilled ? colorForProgress(segmentProgress, zones) : undefined,
               }}
             />
           );

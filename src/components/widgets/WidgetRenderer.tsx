@@ -153,16 +153,30 @@ export function WidgetRenderer({ widget, mode = "display" }: WidgetRendererProps
     }
 
     case "drs":
+      {
+        const availableKey = typeof payload.availableDataKey === "string" ? payload.availableDataKey : "drs.available";
+        const enabledKey = typeof payload.enabledDataKey === "string" ? payload.enabledDataKey : "drs.enabled";
+        const activeKey = typeof payload.activeDataKey === "string"
+          ? payload.activeDataKey
+          : typeof payload.dataKey === "string" ? payload.dataKey : "drs.active";
+        const available = getValue(availableKey);
+        const enabled = getValue(enabledKey);
+        const active = getValue(activeKey);
+
       return (
         <Drs
-          active={Boolean(value)}
+          available={Boolean(available)}
+          enabled={Boolean(enabled)}
+          active={Boolean(active)}
           activeColor={typeof payload.activeColor === "string" ? payload.activeColor : undefined}
+          availableColor={typeof payload.availableColor === "string" ? payload.availableColor : undefined}
           inactiveColor={typeof payload.inactiveColor === "string" ? payload.inactiveColor : undefined}
           label={typeof payload.label === "string" ? payload.label : undefined}
           style={widget.style}
           mode={mode}
         />
       );
+      }
 
     case "rpm-bar": {
       const configuredZones: RpmZone[] = Array.isArray(payload.zones)
@@ -184,7 +198,7 @@ export function WidgetRenderer({ widget, mode = "display" }: WidgetRendererProps
           redline={typeof redlineValue === "number" ? redlineValue : undefined}
           segments={typeof payload.segments === "number" ? payload.segments : undefined}
           zones={configuredZones.length > 0 ? configuredZones : undefined}
-          fillDirection={payload.fillDirection === "left-to-right" ? "left-to-right" : "edge-to-center"}
+          fillDirection="left-to-right"
           style={widget.style}
           mode={mode}
         />

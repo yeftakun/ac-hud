@@ -361,6 +361,23 @@
   box-shadow: 0 0 8px color-mix(in srgb, currentColor 35%, transparent);
 }
 
+.rpm-bar__segment--redline {
+  animation: rpm-redline-blink 200ms steps(2, end) infinite;
+}
+
+@keyframes rpm-redline-blink {
+  0%,
+  100% {
+    opacity: 1;
+    box-shadow: 0 0 12px #ffffff;
+  }
+
+  50% {
+    opacity: 0.2;
+    box-shadow: 0 0 2px #ffffff;
+  }
+}
+
 /* ---- Activation lights ---- */
 
 .activation-lights {
