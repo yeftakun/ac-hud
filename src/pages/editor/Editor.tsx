@@ -79,6 +79,11 @@ const ADDABLE_WIDGET_TYPES = [
   "stat-box",
   "stat-group",
   "raw-value",
+  "pedal-bar",
+  "steering-wheel",
+  "kers-bar",
+  "tyre-wear-bar",
+  "gforce",
   "drs",
   "rpm-bar",
   "activation-lights",
@@ -91,6 +96,11 @@ const DEFAULT_DATA_KEYS: Record<AddableWidgetType, string> = {
   "stat-box": "lap.best",
   "stat-group": "engine.oilTemp",
   "raw-value": "speed",
+  "pedal-bar": "throttle",
+  "steering-wheel": "steering",
+  "kers-bar": "kers.charge",
+  "tyre-wear-bar": "tyres.FL.wear",
+  gforce: "gforce.x",
   drs: "drs.active",
   "rpm-bar": "rpm",
   "activation-lights": "pit.active",
@@ -126,6 +136,11 @@ function createWidget(type: AddableWidgetType, dataKey: string, widgets: WidgetC
     "stat-box": { w: 180, h: 70 },
     "stat-group": { w: 240, h: 150 },
     "raw-value": { w: 180, h: 80 },
+    "pedal-bar": { w: 210, h: 55 },
+    "steering-wheel": { w: 170, h: 170 },
+    "kers-bar": { w: 220, h: 65 },
+    "tyre-wear-bar": { w: 180, h: 55 },
+    gforce: { w: 170, h: 170 },
     drs: { w: 120, h: 80 },
     "rpm-bar": { w: 240, h: 50 },
     "activation-lights": { w: 60, h: 180 },
@@ -142,6 +157,11 @@ function createWidget(type: AddableWidgetType, dataKey: string, widgets: WidgetC
     payload = { rows: [{ dataKey, label: "NEW VALUE" }] };
   }
   if (type === "raw-value") payload = { dataKey, fontSize: 48 };
+  if (type === "pedal-bar") payload = { dataKey, label: "THROTTLE", color: "#2ee66b", max: 100 };
+  if (type === "steering-wheel") payload = { dataKey, maxInput: 1 };
+  if (type === "kers-bar") payload = { dataKey, inputDataKey: "kers.input" };
+  if (type === "tyre-wear-bar") payload = { dataKey, label: "FL WEAR" };
+  if (type === "gforce") payload = { xDataKey: "gforce.x", yDataKey: "gforce.y", maxG: 2 };
   if (type === "drs") payload = { dataKey, activeColor: "#2ee66b", inactiveColor: "#2a3340", label: "DRS" };
   if (type === "rpm-bar") {
     payload = {
@@ -674,6 +694,35 @@ export function Editor() {
                     onChange={(event) => updateSelectedPayload("dataKey", event.target.value)}
                   />
                 </label>
+              ) : null}
+
+              {typeof selectedPayload.inputDataKey === "string" ? (
+                <label style={fieldStyle}>
+                  Input data key
+                  <input
+                    value={selectedPayload.inputDataKey}
+                    onChange={(event) => updateSelectedPayload("inputDataKey", event.target.value)}
+                  />
+                </label>
+              ) : null}
+
+              {selectedWidget.type === "gforce" ? (
+                <>
+                  <label style={fieldStyle}>
+                    Horizontal data key
+                    <input
+                      value={typeof selectedPayload.xDataKey === "string" ? selectedPayload.xDataKey : "gforce.x"}
+                      onChange={(event) => updateSelectedPayload("xDataKey", event.target.value)}
+                    />
+                  </label>
+                  <label style={fieldStyle}>
+                    Vertical data key
+                    <input
+                      value={typeof selectedPayload.yDataKey === "string" ? selectedPayload.yDataKey : "gforce.y"}
+                      onChange={(event) => updateSelectedPayload("yDataKey", event.target.value)}
+                    />
+                  </label>
+                </>
               ) : null}
 
               {defaultValueFontSize(selectedWidget.type) !== null ? (

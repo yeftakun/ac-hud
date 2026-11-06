@@ -110,6 +110,10 @@ export function Data() {
             <SliderField label="Speed" dataKey="speed" telemetry={telemetry} setValue={setValue} min={0} max={360} unit="km/h" />
             <SliderField label="RPM" dataKey="rpm" telemetry={telemetry} setValue={setValue} min={0} max={10000} step={100} />
             <SliderField label="Redline" dataKey="redline" telemetry={telemetry} setValue={setValue} min={5000} max={12000} step={100} />
+            <SliderField label="Throttle" dataKey="throttle" telemetry={telemetry} setValue={setValue} min={0} max={100} unit="%" />
+            <SliderField label="Brake" dataKey="brake" telemetry={telemetry} setValue={setValue} min={0} max={100} unit="%" />
+            <SliderField label="Clutch" dataKey="clutch" telemetry={telemetry} setValue={setValue} min={0} max={100} unit="%" />
+            <SliderField label="Steering" dataKey="steering" telemetry={telemetry} setValue={setValue} min={-1} max={1} step={0.01} />
             <SliderField label="Gear" dataKey="gear" telemetry={telemetry} setValue={setValue} min={0} max={8} />
             <SliderField label="Delta" dataKey="delta" telemetry={telemetry} setValue={setValue} min={-5} max={5} step={0.001} unit="s" />
             <SliderField label="Position" dataKey="position" telemetry={telemetry} setValue={setValue} min={1} max={40} />
@@ -128,10 +132,14 @@ export function Data() {
             <SliderField label="ABS level" dataKey="abs" telemetry={telemetry} setValue={setValue} min={0} max={12} />
             <SliderField label="TC level" dataKey="tc" telemetry={telemetry} setValue={setValue} min={0} max={12} />
             <SliderField label="Brake bias" dataKey="bb" telemetry={telemetry} setValue={setValue} min={40} max={70} step={0.1} unit="%" />
-            <div className="data-toggle-grid"><MomentaryButton label="ABS active" dataKey="abs.active" telemetry={telemetry} setValue={setValue} /><MomentaryButton label="TC active" dataKey="tc.active" telemetry={telemetry} setValue={setValue} /><ToggleButton label="Pit limiter" dataKey="pit.active" telemetry={telemetry} setValue={setValue} /><ToggleButton label="DRS" dataKey="drs.active" telemetry={telemetry} setValue={setValue} /></div>
+            <div className="data-toggle-grid"><MomentaryButton label="ABS active" dataKey="abs.active" telemetry={telemetry} setValue={setValue} /><MomentaryButton label="TC active" dataKey="tc.active" telemetry={telemetry} setValue={setValue} /><ToggleButton label="Pit limiter" dataKey="pit.active" telemetry={telemetry} setValue={setValue} /><ToggleButton label="DRS active" dataKey="drs.active" telemetry={telemetry} setValue={setValue} /><ToggleButton label="DRS available" dataKey="drs.available" telemetry={telemetry} setValue={setValue} /><ToggleButton label="DRS enabled" dataKey="drs.enabled" telemetry={telemetry} setValue={setValue} /></div>
           </Section>
 
           <Section eyebrow="04 / ENGINE" title="Temperatures & pressure">
+            <SliderField label="KERS charge" dataKey="kers.charge" telemetry={telemetry} setValue={setValue} min={0} max={100} unit="%" />
+            <SliderField label="KERS input" dataKey="kers.input" telemetry={telemetry} setValue={setValue} min={0} max={100} unit="%" />
+            <SliderField label="Turbo boost" dataKey="turbo.boost" telemetry={telemetry} setValue={setValue} min={0} max={5} step={0.1} unit="bar" />
+            <SliderField label="Engine brake" dataKey="engine.brake" telemetry={telemetry} setValue={setValue} min={0} max={12} />
             <SliderField label="Oil temperature" dataKey="engine.oilTemp" telemetry={telemetry} setValue={setValue} min={50} max={150} unit="°C" />
             <SliderField label="Oil pressure" dataKey="engine.oilPressure" telemetry={telemetry} setValue={setValue} min={0} max={10} step={0.1} unit="bar" />
             <SliderField label="Water temperature" dataKey="engine.waterTemp" telemetry={telemetry} setValue={setValue} min={50} max={150} unit="°C" />
@@ -139,7 +147,17 @@ export function Data() {
           </Section>
 
           <Section eyebrow="05 / TYRES" title="Tyre readings">
-            {(["FL", "FR", "RL", "RR"] as const).map((corner) => <div className="data-tyre-row" key={corner}><strong>{corner}</strong><SliderField label="PSI" dataKey={`tyres.${corner}.psi`} telemetry={telemetry} setValue={setValue} min={15} max={40} step={0.1} /><SliderField label="Temp" dataKey={`tyres.${corner}.temp`} telemetry={telemetry} setValue={setValue} min={20} max={150} step={1} unit="°C" /></div>)}
+            {(["FL", "FR", "RL", "RR"] as const).map((corner) => <div className="data-tyre-row" key={corner}><strong>{corner}</strong><SliderField label="PSI" dataKey={`tyres.${corner}.psi`} telemetry={telemetry} setValue={setValue} min={15} max={40} step={0.1} /><SliderField label="Temp" dataKey={`tyres.${corner}.temp`} telemetry={telemetry} setValue={setValue} min={20} max={150} step={1} unit="°C" /><SliderField label="Wear" dataKey={`tyres.${corner}.wear`} telemetry={telemetry} setValue={setValue} min={0} max={100} step={0.1} unit="%" /></div>)}
+          </Section>
+
+          <Section eyebrow="06 / MOTION & CONDITIONS" title="Vehicle environment">
+            <SliderField label="G-force lateral" dataKey="gforce.x" telemetry={telemetry} setValue={setValue} min={-3} max={3} step={0.01} unit="G" />
+            <SliderField label="G-force longitudinal" dataKey="gforce.y" telemetry={telemetry} setValue={setValue} min={-3} max={3} step={0.01} unit="G" />
+            <SliderField label="G-force vertical" dataKey="gforce.z" telemetry={telemetry} setValue={setValue} min={-3} max={3} step={0.01} unit="G" />
+            <SliderField label="Tyres out" dataKey="tyres.out" telemetry={telemetry} setValue={setValue} min={0} max={4} />
+            <SliderField label="Air temperature" dataKey="air.temp" telemetry={telemetry} setValue={setValue} min={-20} max={60} step={0.5} unit="°C" />
+            <SliderField label="Road temperature" dataKey="road.temp" telemetry={telemetry} setValue={setValue} min={-20} max={80} step={0.5} unit="°C" />
+            <div className="data-toggle-grid"><ToggleButton label="AI controlled" dataKey="car.ai" telemetry={telemetry} setValue={setValue} /></div>
           </Section>
         </div>
 

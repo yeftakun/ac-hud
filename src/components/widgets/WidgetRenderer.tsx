@@ -2,12 +2,17 @@ import type { CSSProperties } from "react";
 import { useTelemetry } from "../../hooks/useTelemetry";
 import { ActivationLights, type ActivationState } from "./ActivationLights";
 import { Drs } from "./Drs";
+import { GForce } from "./GForce";
+import { KersBar } from "./KersBar";
 import { OverlayEvent } from "./OverlayEvent";
+import { PedalBar } from "./PedalBar";
 import { RawValue } from "./RawValue";
 import { RpmBar, type RpmZone } from "./RpmBar";
 import { StatBox, type StatBoxStyle, type StatBoxValueFormat, type WidgetMode } from "./StatBox";
 import { StatGroup, type StatGroupRow } from "./StatGroup";
 import { TyresWidget, type Corner, type TyreReading, type TyreThresholds } from "./TyresWidget";
+import { SteeringWheel } from "./SteeringWheel";
+import { TyreWearBar } from "./TyreWearBar";
 import "./hud-widgets.css";
 
 export type WidgetValue = string | number | boolean | null;
@@ -100,6 +105,52 @@ export function WidgetRenderer({ widget, mode = "display" }: WidgetRendererProps
           mode={mode}
         />
       );
+
+    case "pedal-bar":
+      return (
+        <PedalBar
+          value={typeof value === "number" ? value : undefined}
+          label={typeof payload.label === "string" ? payload.label : widget.id}
+          color={typeof payload.color === "string" ? payload.color : undefined}
+          max={typeof payload.max === "number" ? payload.max : undefined}
+          style={widget.style}
+          mode={mode}
+        />
+      );
+
+    case "steering-wheel":
+      return (
+        <SteeringWheel
+          value={typeof value === "number" ? value : undefined}
+          maxInput={typeof payload.maxInput === "number" ? payload.maxInput : undefined}
+          style={widget.style}
+          mode={mode}
+        />
+      );
+
+    case "kers-bar": {
+      const inputKey = typeof payload.inputDataKey === "string" ? payload.inputDataKey : "kers.input";
+      const input = getValue(inputKey);
+      return <KersBar charge={typeof value === "number" ? value : undefined} input={typeof input === "number" ? input : undefined} style={widget.style} mode={mode} />;
+    }
+
+    case "tyre-wear-bar":
+      return (
+        <TyreWearBar
+          value={typeof value === "number" ? value : undefined}
+          label={typeof payload.label === "string" ? payload.label : "FL WEAR"}
+          style={widget.style}
+          mode={mode}
+        />
+      );
+
+    case "gforce": {
+      const xKey = typeof payload.xDataKey === "string" ? payload.xDataKey : "gforce.x";
+      const yKey = typeof payload.yDataKey === "string" ? payload.yDataKey : "gforce.y";
+      const x = getValue(xKey);
+      const y = getValue(yKey);
+      return <GForce x={typeof x === "number" ? x : undefined} y={typeof y === "number" ? y : undefined} maxG={typeof payload.maxG === "number" ? payload.maxG : undefined} style={widget.style} mode={mode} />;
+    }
 
     case "drs":
       return (
