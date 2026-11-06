@@ -1,0 +1,19 @@
+{
+  "name": "AC Telemetry HUD",
+  "short_name": "AC HUD",
+  "description": "Assetto Corsa telemetry display",
+  "start_url": "/",
+  "scope": "/",
+  "display": "standalone",
+  "orientation": "landscape",
+  "theme_color": "#0b0d11",
+  "background_color": "#0b0d11",
+  "icons": [
+    {
+      "src": "/icon-placeholder.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ]
+}
