@@ -1,0 +1,1 @@
+saya rencananya mau bikin switch data source untuk frontend ini. Jadi untuk pertama saya ingin data sourcenya live test. Tapi tidak menutup kemungkinan untuk ada opsi Assetto Corsa dan ACC. Karena sejauh ini saya ingin menguji frontnednya dulu maka belum ada backend untuk assetto corsa dan ACC. Ini sebagai informasi aja.

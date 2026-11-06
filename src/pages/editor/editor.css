@@ -1,0 +1,95 @@
+.editor-page input:not([type="color"]),
+.editor-page select {
+  width: 100%;
+  min-height: 36px;
+  box-sizing: border-box;
+  padding: 8px 10px;
+  border: 1px solid #34404e;
+  border-radius: 6px;
+  outline: none;
+  color: #e9eef5;
+  background: #0e131a;
+  font: inherit;
+  font-size: 13px;
+}
+
+.editor-page input:not([type="color"]):focus,
+.editor-page select:focus {
+  border-color: #78a9e8;
+  box-shadow: 0 0 0 2px rgba(78, 148, 236, .16);
+}
+
+.editor-page input::placeholder { color: #667386; }
+
+.editor-page input[type="color"] {
+  width: 42px;
+  height: 30px;
+  padding: 2px;
+  border: 1px solid #34404e;
+  border-radius: 5px;
+  background: #0e131a;
+  cursor: pointer;
+}
+
+.editor-page button {
+  min-height: 34px;
+  padding: 8px 12px;
+  border: 1px solid #34404e;
+  border-radius: 6px;
+  color: #d7e0eb;
+  background: #1a222d;
+  font: inherit;
+  font-size: 12px;
+  cursor: pointer;
+  transition: border-color .15s ease, background .15s ease, color .15s ease, opacity .15s ease;
+}
+
+.editor-page button:hover:not(:disabled) {
+  border-color: #6f91b8;
+  background: #222d3a;
+}
+
+.editor-page button:disabled {
+  cursor: not-allowed;
+  opacity: .42;
+}
+
+.editor-page .editor-number-field {
+  display: grid;
+  grid-template-columns: 36px minmax(0, 1fr) 36px;
+  width: 100%;
+}
+
+.editor-page .editor-number-field input {
+  min-width: 0;
+  border-radius: 0;
+  text-align: center;
+  appearance: textfield;
+}
+
+.editor-page .editor-number-field input::-webkit-outer-spin-button,
+.editor-page .editor-number-field input::-webkit-inner-spin-button {
+  margin: 0;
+  appearance: none;
+}
+
+.editor-page .editor-number-field__button {
+  min-height: 36px;
+  padding: 0;
+  border-color: #34404e;
+  border-radius: 6px 0 0 6px;
+  color: #9fb4cd;
+  background: #18202a;
+  font-size: 25px;
+  font-weight: 300;
+  line-height: 1;
+}
+
+.editor-page .editor-number-field__button:last-child {
+  border-radius: 0 6px 6px 0;
+}
+
+.editor-page .editor-number-field__button:hover:not(:disabled) {
+  color: #ffffff;
+  background: #2b3a4b;
+}

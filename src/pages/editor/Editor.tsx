@@ -5,6 +5,7 @@ import { useHistory } from "../../hooks/useHistory";
 import { FONT_OPTIONS, getFontStyle, isFontStyleKey } from "../../lib/fontOptions";
 import type { StatBoxStyle, WidgetMode } from "../../components/widgets/StatBox";
 import { WidgetRenderer, type WidgetConfig } from "../../components/widgets/WidgetRenderer";
+import "./editor.css";
 
 const CONFIG_API_URL = "http://localhost:3001";
 const PROFILE_ID = "profile_001";
@@ -27,6 +28,28 @@ function isImportedWidget(value: unknown): value is WidgetConfig {
     typeof widget.y === "number" &&
     typeof widget.w === "number" &&
     typeof widget.h === "number"
+  );
+}
+
+interface NumericFieldProps {
+  value: number;
+  min: number;
+  max: number;
+  step?: number;
+  onChange: (value: string) => void;
+}
+
+function NumericField({ value, min, max, step = 1, onChange }: NumericFieldProps) {
+  function changeBy(amount: number) {
+    onChange(String(Math.min(max, Math.max(min, value + amount))));
+  }
+
+  return (
+    <span className="editor-number-field">
+      <button type="button" className="editor-number-field__button" onClick={() => changeBy(-step)} aria-label="Decrease value">‹</button>
+      <input type="number" min={min} max={max} step={step} value={value} onChange={(event) => onChange(event.target.value)} />
+      <button type="button" className="editor-number-field__button" onClick={() => changeBy(step)} aria-label="Increase value">›</button>
+    </span>
   );
 }
 
@@ -431,7 +454,7 @@ export function Editor() {
   const overlayWidgets = profile.widgets.filter((widget) => widget.type === "overlay-event");
 
   return (
-    <main style={pageStyle}>
+    <main className="editor-page" style={pageStyle}>
       <header style={headerStyle}>
         <div>
           <span style={editorEyebrowStyle}>LAYOUT EDITOR</span>
@@ -602,11 +625,11 @@ export function Editor() {
                 <div style={dimensionGridStyle}>
                   <label style={fieldStyle}>
                     Canvas width
-                    <input type="number" min={320} max={4000} step={1} value={canvasWidth} onChange={(event) => updateCanvasDimension("w", event.target.value)} />
+                    <NumericField min={320} max={4000} value={canvasWidth} onChange={(value) => updateCanvasDimension("w", value)} />
                   </label>
                   <label style={fieldStyle}>
                     Canvas height
-                    <input type="number" min={320} max={4000} step={1} value={canvasHeight} onChange={(event) => updateCanvasDimension("h", event.target.value)} />
+                    <NumericField min={320} max={4000} value={canvasHeight} onChange={(value) => updateCanvasDimension("h", value)} />
                   </label>
                 </div>
                 <label style={colorFieldStyle}>
@@ -655,29 +678,20 @@ export function Editor() {
               {defaultValueFontSize(selectedWidget.type) !== null ? (
                 <label style={fieldStyle}>
                   Value size (px)
-                  <input
-                    type="number"
+                  <NumericField
                     min={8}
                     max={200}
-                    step={1}
                     value={typeof selectedPayload.fontSize === "number"
                       ? selectedPayload.fontSize
                       : defaultValueFontSize(selectedWidget.type) ?? 32}
-                    onChange={(event) => updateSelectedFontSize(event.target.value)}
+                    onChange={updateSelectedFontSize}
                   />
                 </label>
               ) : null}
 
               <label style={fieldStyle}>
                 Overlay index (z-index)
-                <input
-                  type="number"
-                  min={0}
-                  max={9999}
-                  step={1}
-                  value={selectedWidget.zIndex ?? 2}
-                  onChange={(event) => updateSelectedZIndex(event.target.value)}
-                />
+                <NumericField min={0} max={9999} value={selectedWidget.zIndex ?? 2} onChange={updateSelectedZIndex} />
               </label>
 
               <div style={{ marginTop: 20, fontWeight: 700 }}>Colors</div>
