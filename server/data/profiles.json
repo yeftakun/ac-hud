@@ -167,6 +167,29 @@
         }
       },
       {
+        "id": "w_current_lap",
+        "type": "stat-box",
+        "x": 660,
+        "y": 100,
+        "w": 200,
+        "h": 65,
+        "zIndex": 2,
+        "style": {
+          "boxBg": "#141820",
+          "boxBorder": "#2a3340",
+          "labelColor": "#a8b2c0",
+          "valueColor": "#ffffff"
+        },
+        "payload": {
+          "dataKey": "lap.current",
+          "variant": "long",
+          "label": "CURRENT LAP",
+          "unit": null,
+          "decimals": 3,
+          "format": "laptime"
+        }
+      },
+      {
         "id": "w_engine_stats",
         "type": "stat-group",
         "x": 20,
@@ -226,7 +249,8 @@
           "variant": "long",
           "label": "BEST LAP",
           "unit": null,
-          "decimals": 3
+          "decimals": 3,
+          "format": "laptime"
         }
       },
       {
@@ -270,7 +294,8 @@
           "variant": "long",
           "label": "LAST LAP",
           "unit": null,
-          "decimals": 3
+          "decimals": 3,
+          "format": "laptime"
         }
       },
       {
@@ -335,7 +360,7 @@
           "dataKey": "fuel",
           "variant": "short",
           "label": "FUEL",
-          "unit": "%",
+          "unit": "L",
           "decimals": 1
         }
       },
@@ -408,10 +433,10 @@
       {
         "id": "w_tyres",
         "type": "tyres",
-        "x": 680,
-        "y": 250,
-        "w": 240,
-        "h": 240,
+        "x": 751,
+        "y": 287,
+        "w": 148,
+        "h": 203,
         "zIndex": 2,
         "style": {
           "boxBg": "#141820",

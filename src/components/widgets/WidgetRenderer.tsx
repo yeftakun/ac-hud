@@ -5,7 +5,7 @@ import { Drs } from "./Drs";
 import { OverlayEvent } from "./OverlayEvent";
 import { RawValue } from "./RawValue";
 import { RpmBar, type RpmZone } from "./RpmBar";
-import { StatBox, type StatBoxStyle, type WidgetMode } from "./StatBox";
+import { StatBox, type StatBoxStyle, type StatBoxValueFormat, type WidgetMode } from "./StatBox";
 import { StatGroup, type StatGroupRow } from "./StatGroup";
 import { TyresWidget, type Corner, type TyreReading, type TyreThresholds } from "./TyresWidget";
 import "./hud-widgets.css";
@@ -54,6 +54,7 @@ export function WidgetRenderer({ widget, mode = "display" }: WidgetRendererProps
           value={typeof value === "boolean" ? String(value) : value}
           unit={typeof payload.unit === "string" ? payload.unit : null}
           decimals={typeof payload.decimals === "number" ? payload.decimals : undefined}
+          format={payload.format === "laptime" ? ("laptime" satisfies StatBoxValueFormat) : "decimal"}
           style={widget.style}
           mode={mode}
         />

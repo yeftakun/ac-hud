@@ -10,6 +10,7 @@ export interface StatBoxStyle {
 }
 
 export type WidgetMode = "edit" | "display";
+export type StatBoxValueFormat = "decimal" | "laptime";
 
 export interface StatBoxProps {
   label: string;
@@ -18,6 +19,7 @@ export interface StatBoxProps {
   value?: string | number | null;
   unit?: string | null;
   decimals?: number;
+  format?: StatBoxValueFormat;
   style?: StatBoxStyle;
   className?: string;
   mode?: WidgetMode;
@@ -30,8 +32,13 @@ const DEFAULT_STYLE: Required<StatBoxStyle> = {
   valueColor: "#ffffff",
 };
 
-function formatValue(value: StatBoxProps["value"], decimals?: number): string {
+function formatValue(value: StatBoxProps["value"], decimals?: number, format: StatBoxValueFormat = "decimal"): string {
   if (value === null || value === undefined || value === "") return "NA";
+  if (format === "laptime" && typeof value === "number" && Number.isFinite(value)) {
+    const minutes = Math.floor(value / 60);
+    const seconds = (value - minutes * 60).toFixed(3).padStart(6, "0");
+    return `${minutes}:${seconds}`;
+  }
   if (typeof value === "number" && typeof decimals === "number") {
     return value.toFixed(decimals);
   }
@@ -43,6 +50,7 @@ export function StatBox({
   value,
   unit,
   decimals,
+  format = "decimal",
   style,
   className,
   mode = "display",
@@ -55,7 +63,7 @@ export function StatBox({
     "--value-color": merged.valueColor,
   } as CSSProperties;
 
-  const displayValue = formatValue(value, decimals);
+  const displayValue = formatValue(value, decimals, format);
   const showUnit = displayValue !== "NA" && unit;
 
   return (
