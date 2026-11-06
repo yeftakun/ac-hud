@@ -10,6 +10,11 @@ const CANVAS_WIDTH = 960;
 const CANVAS_HEIGHT = 540;
 const CANVAS_BACKGROUND = "#11151c";
 
+function navigateTo(path: string) {
+  window.history.pushState({}, "", path);
+  window.dispatchEvent(new PopStateEvent("popstate"));
+}
+
 interface Profile {
   schemaVersion: number;
   id: string;
@@ -158,7 +163,9 @@ export function Editor() {
   const [newWidgetType, setNewWidgetType] = useState<AddableWidgetType>("stat-box");
   const [newWidgetDataKey, setNewWidgetDataKey] = useState(DEFAULT_DATA_KEYS["stat-box"]);
   const elementRefs = useRef<Record<string, HTMLElement | null>>({});
+  const stageRef = useRef<HTMLDivElement>(null);
   const canvasRef = useRef<HTMLDivElement>(null);
+  const [stageSize, setStageSize] = useState({ width: 0, height: 0 });
 
   useEffect(() => {
     const controller = new AbortController();
@@ -188,6 +195,16 @@ export function Editor() {
   useEffect(() => {
     setSelectedElement(selectedId ? elementRefs.current[selectedId] ?? null : null);
   }, [selectedId, profile]);
+
+  useEffect(() => {
+    const stage = stageRef.current;
+    if (!stage) return;
+    const observer = new ResizeObserver(([entry]) => {
+      setStageSize({ width: entry.contentRect.width, height: entry.contentRect.height });
+    });
+    observer.observe(stage);
+    return () => observer.disconnect();
+  }, [profile]);
 
   useEffect(() => {
     function handleKeyDown(event: KeyboardEvent) {
@@ -304,6 +321,11 @@ export function Editor() {
   const canvasWidth = profile.canvas.w || CANVAS_WIDTH;
   const canvasHeight = profile.canvas.h || CANVAS_HEIGHT;
   const canvasBackground = profile.canvas.background || CANVAS_BACKGROUND;
+  const canvasScale = Math.min(
+    Math.max((stageSize.width - 48) / canvasWidth, 0.1),
+    Math.max((stageSize.height - 48) / canvasHeight, 0.1),
+    1,
+  );
   const selectedStyle = { ...STYLE_DEFAULTS, ...selectedWidget?.style };
   const selectedPayload = selectedWidget?.payload ?? {};
   const regularWidgets = profile.widgets.filter((widget) => widget.type !== "overlay-event");
@@ -313,13 +335,23 @@ export function Editor() {
     <main style={pageStyle}>
       <header style={headerStyle}>
         <div>
-          <strong>{profile.name}</strong>
-          <span style={{ marginLeft: 12, color: "#8b93a3", fontSize: 13 }}>Desktop editor</span>
+          <span style={editorEyebrowStyle}>LAYOUT EDITOR</span>
+          <strong style={{ display: "block", marginTop: 4 }}>{profile.name}</strong>
         </div>
         <div style={{ display: "flex", gap: 8 }}>
-          <button type="button" onClick={() => setIsAddPickerOpen((open) => !open)}>
-            Add Widget
+          <button type="button" style={quietButtonStyle} onClick={() => navigateTo("/")}>Home</button>
+          <button
+            type="button"
+            style={quietButtonStyle}
+            onClick={() => {
+              localStorage.setItem("ac-hud.active-profile", profile.id);
+              navigateTo("/display");
+            }}
+          >
+            Display
           </button>
+          <span style={fitBadgeStyle}>FIT {Math.round(canvasScale * 100)}%</span>
+          <button type="button" style={primaryButtonStyle} onClick={() => setIsAddPickerOpen(true)}>+ Add Widget</button>
           <button type="button" onClick={deleteSelectedWidget} disabled={!selectedWidget}>
             Delete
           </button>
@@ -330,39 +362,55 @@ export function Editor() {
       </header>
 
       {isAddPickerOpen ? (
-        <section style={addPickerStyle}>
-          <label style={pickerFieldStyle}>
-            Type
-            <select value={newWidgetType} onChange={(event) => {
-              const type = event.target.value as AddableWidgetType;
-              setNewWidgetType(type);
-              setNewWidgetDataKey(DEFAULT_DATA_KEYS[type]);
-            }}>
-              {ADDABLE_WIDGET_TYPES.map((type) => <option key={type} value={type}>{type}</option>)}
-            </select>
-          </label>
-          <label style={pickerFieldStyle}>
-            Initial dataKey
-            <input value={newWidgetDataKey} onChange={(event) => setNewWidgetDataKey(event.target.value)} placeholder="e.g. rpm" />
-          </label>
-          <button type="button" onClick={addWidget}>Add to canvas</button>
-        </section>
+        <div style={modalOverlayStyle} onMouseDown={(event) => { if (event.target === event.currentTarget) setIsAddPickerOpen(false); }}>
+          <section style={modalStyle} role="dialog" aria-modal="true" aria-labelledby="add-widget-title">
+            <div style={modalHeaderStyle}>
+              <div><span style={editorEyebrowStyle}>WIDGET LIBRARY</span><h2 id="add-widget-title" style={{ margin: "6px 0 0" }}>Add widget</h2></div>
+              <button type="button" style={closeButtonStyle} onClick={() => setIsAddPickerOpen(false)} aria-label="Close">×</button>
+            </div>
+            <p style={mutedStyle}>Pilih jenis widget, lalu tentukan data key awal. Semua perubahan masih lokal sampai Save ditekan.</p>
+            <div style={typeGridStyle}>
+              {ADDABLE_WIDGET_TYPES.map((type) => (
+                <button
+                  key={type}
+                  type="button"
+                  style={typeCardStyle(newWidgetType === type)}
+                  onClick={() => { setNewWidgetType(type); setNewWidgetDataKey(DEFAULT_DATA_KEYS[type]); }}
+                >
+                  <strong>{type}</strong>
+                  <small>{DEFAULT_DATA_KEYS[type]}</small>
+                </button>
+              ))}
+            </div>
+            <label style={fieldStyle}>
+              Initial dataKey
+              <input autoFocus value={newWidgetDataKey} onChange={(event) => setNewWidgetDataKey(event.target.value)} placeholder="e.g. rpm" />
+            </label>
+            <div style={modalFooterStyle}>
+              <button type="button" style={quietButtonStyle} onClick={() => setIsAddPickerOpen(false)}>Cancel</button>
+              <button type="button" style={primaryButtonStyle} onClick={addWidget}>Add to canvas</button>
+            </div>
+          </section>
+        </div>
       ) : null}
 
       <div style={workspaceStyle}>
-        <div
-          ref={canvasRef}
-          style={{
-            position: "relative",
-            flex: "0 0 auto",
-            width: canvasWidth,
-            height: canvasHeight,
-            overflow: "hidden",
-            background: canvasBackground,
-            border: "1px solid #2a3340",
-          }}
-          onClick={() => setSelectedId(null)}
-        >
+        <div ref={stageRef} style={stageStyle}>
+          <div style={{ width: canvasWidth * canvasScale, height: canvasHeight * canvasScale }}>
+            <div
+              ref={canvasRef}
+              style={{
+                position: "relative",
+                width: canvasWidth,
+                height: canvasHeight,
+                overflow: "hidden",
+                background: canvasBackground,
+                border: "1px solid #2a3340",
+                transform: `scale(${canvasScale})`,
+                transformOrigin: "top left",
+              }}
+              onClick={() => setSelectedId(null)}
+            >
           <div style={{ position: "absolute", inset: 0, zIndex: 0 }}>
           {regularWidgets.map((widget) => {
             const isSelected = widget.id === selectedId;
@@ -409,12 +457,14 @@ export function Editor() {
             keepRatio={false}
             renderDirections={["nw", "n", "ne", "w", "e", "sw", "s", "se"]}
             onDrag={({ left, top }) => {
-              if (selectedId) updateWidget(selectedId, { x: round(left), y: round(top) });
+              if (selectedId) updateWidget(selectedId, { x: round(left / canvasScale), y: round(top / canvasScale) });
             }}
             onResize={({ width, height }) => {
-              if (selectedId) updateWidget(selectedId, { w: round(width), h: round(height) });
+              if (selectedId) updateWidget(selectedId, { w: round(width / canvasScale), h: round(height / canvasScale) });
             }}
           />
+            </div>
+          </div>
         </div>
 
         <aside style={sidebarStyle}>
@@ -536,36 +586,133 @@ const headerStyle: CSSProperties = {
   marginBottom: 16,
 };
 
-const workspaceStyle: CSSProperties = {
-  display: "flex",
-  alignItems: "flex-start",
-  gap: 20,
-  overflowX: "auto",
+const editorEyebrowStyle: CSSProperties = {
+  color: "#8b93a3",
+  fontSize: 10,
+  letterSpacing: "0.16em",
 };
 
-const addPickerStyle: CSSProperties = {
-  display: "flex",
-  alignItems: "flex-end",
-  gap: 14,
-  width: "fit-content",
-  maxWidth: "100%",
-  marginBottom: 16,
-  padding: 14,
+const fitBadgeStyle: CSSProperties = {
+  display: "inline-flex",
+  alignItems: "center",
+  padding: "0 10px",
   border: "1px solid #2a3340",
-  borderRadius: 8,
+  borderRadius: 6,
+  color: "#8b93a3",
+  fontSize: 11,
+};
+
+const quietButtonStyle: CSSProperties = {
+  border: "1px solid #2a3340",
+  color: "#a8b2c0",
   background: "#141820",
 };
 
-const pickerFieldStyle: CSSProperties = {
+const primaryButtonStyle: CSSProperties = {
+  border: "1px solid #8dc455",
+  color: "#10150d",
+  background: "#a8e063",
+  fontWeight: 700,
+};
+
+const modalOverlayStyle: CSSProperties = {
+  position: "fixed",
+  inset: 0,
+  zIndex: 2000,
+  display: "grid",
+  placeItems: "center",
+  padding: 24,
+  background: "rgba(3, 5, 7, 0.78)",
+  backdropFilter: "blur(5px)",
+};
+
+const modalStyle: CSSProperties = {
+  width: "min(620px, 100%)",
+  maxHeight: "min(720px, 100%)",
+  overflowY: "auto",
+  padding: 24,
+  boxSizing: "border-box",
+  border: "1px solid #3b4b5b",
+  borderRadius: 10,
+  color: "#ffffff",
+  background: "#141820",
+  boxShadow: "0 24px 80px rgba(0, 0, 0, .45)",
+};
+
+const modalHeaderStyle: CSSProperties = {
+  display: "flex",
+  alignItems: "flex-start",
+  justifyContent: "space-between",
+  gap: 20,
+};
+
+const closeButtonStyle: CSSProperties = {
+  padding: "0 5px",
+  border: 0,
+  color: "#8b93a3",
+  background: "transparent",
+  fontSize: 28,
+  lineHeight: 1,
+  cursor: "pointer",
+};
+
+const typeGridStyle: CSSProperties = {
+  display: "grid",
+  gridTemplateColumns: "repeat(3, minmax(0, 1fr))",
+  gap: 8,
+  marginTop: 20,
+};
+
+const typeCardStyle = (active: boolean): CSSProperties => ({
   display: "flex",
   flexDirection: "column",
-  gap: 6,
-  color: "#a8b2c0",
-  fontSize: 13,
+  gap: 7,
+  minHeight: 70,
+  padding: 12,
+  border: `1px solid ${active ? "#a8e063" : "#2a3340"}`,
+  borderRadius: 6,
+  color: active ? "#eaffd9" : "#d4dce8",
+  background: active ? "#21301e" : "#1b212b",
+  textAlign: "left",
+  cursor: "pointer",
+});
+
+const modalFooterStyle: CSSProperties = {
+  display: "flex",
+  justifyContent: "flex-end",
+  gap: 10,
+  marginTop: 24,
+  paddingTop: 18,
+  borderTop: "1px solid #2a3340",
+};
+
+const workspaceStyle: CSSProperties = {
+  display: "flex",
+  height: "calc(100vh - 150px)",
+  minHeight: 420,
+  alignItems: "flex-start",
+  gap: 20,
+  overflow: "hidden",
+};
+
+const stageStyle: CSSProperties = {
+  display: "grid",
+  placeItems: "center",
+  flex: "1 1 auto",
+  minWidth: 0,
+  height: "100%",
+  overflow: "hidden",
+  border: "1px solid #222b35",
+  borderRadius: 8,
+  background: "#0e1218",
+  backgroundImage: "radial-gradient(#27313c 1px, transparent 1px)",
+  backgroundSize: "18px 18px",
 };
 
 const sidebarStyle: CSSProperties = {
   flex: "0 0 280px",
+  maxHeight: "100%",
+  overflowY: "auto",
   minHeight: 300,
   padding: 18,
   boxSizing: "border-box",

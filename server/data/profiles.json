@@ -47,8 +47,8 @@
       {
         "id": "w_activation",
         "type": "activation-lights",
-        "x": 900,
-        "y": 20,
+        "x": 890,
+        "y": 102,
         "w": 40,
         "h": 180,
         "zIndex": 2,
@@ -169,8 +169,8 @@
       {
         "id": "w_current_lap",
         "type": "stat-box",
-        "x": 660,
-        "y": 100,
+        "x": 674,
+        "y": 94,
         "w": 200,
         "h": 65,
         "zIndex": 2,
