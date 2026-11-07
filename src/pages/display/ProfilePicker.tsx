@@ -40,11 +40,11 @@ export function ProfilePicker({ onSelect, onOpenEditor }: ProfilePickerProps) {
     <main style={pageStyle}>
       <section style={panelStyle}>
         <h1 style={{ marginTop: 0 }}>AC Telemetry HUD</h1>
-        <p style={mutedStyle}>Pilih profile layout untuk display.</p>
+        <p style={mutedStyle}>Select a layout profile for the display.</p>
         {loading ? <p style={mutedStyle}>Loading profiles…</p> : null}
         {error ? <p style={errorStyle}>{error}</p> : null}
         {!loading && !error && profiles.length === 0 ? (
-          <p style={mutedStyle}>Belum ada profile tersimpan.</p>
+          <p style={mutedStyle}>No saved profiles.</p>
         ) : null}
         <div style={listStyle}>
           {profiles.map((profile) => (

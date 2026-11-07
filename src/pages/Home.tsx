@@ -31,7 +31,7 @@ export function Home({ onOpenDisplay, onOpenEditor }: HomeProps) {
       .catch((loadError) => {
         if (!mounted) return;
         if (loadError instanceof DOMException && loadError.name === "AbortError") {
-          setError("Config server tidak merespons dalam 5 detik.");
+          setError("The config server did not respond within 5 seconds.");
           return;
         }
         setError(loadError instanceof Error ? loadError.message : "Failed to load profiles");
@@ -74,22 +74,22 @@ export function Home({ onOpenDisplay, onOpenEditor }: HomeProps) {
           <div>
             <p className="home-kicker">AC DISPLAY UNIT</p>
             <h1>Choose an action</h1>
-            <p className="home-subtitle">Buka tampilan telemetry atau ubah layout widget dari editor.</p>
+            <p className="home-subtitle">Open the telemetry display or edit the widget layout.</p>
           </div>
         </div>
         <section className="home-actions" aria-label="Quick actions">
           <button type="button" className="home-action home-action--display" onClick={openDisplay} disabled={loading || profiles.length === 0}>
-            <span className="home-action__icon">▶</span><span className="home-action__content"><strong>Open Display</strong><small>{activeProfile ? activeProfile.name : "Pilih profile terlebih dahulu"}</small></span><span className="home-action__arrow">→</span>
+            <span className="home-action__icon">▶</span><span className="home-action__content"><strong>Open Display</strong><small>{activeProfile ? activeProfile.name : "Select a profile first"}</small></span><span className="home-action__arrow">→</span>
           </button>
           <button type="button" className="home-action" onClick={onOpenEditor}>
-            <span className="home-action__icon">✎</span><span className="home-action__content"><strong>Open Editor</strong><small>Atur layout dan properti widget</small></span><span className="home-action__arrow">→</span>
+            <span className="home-action__icon">✎</span><span className="home-action__content"><strong>Open Editor</strong><small>Arrange widgets and edit their properties</small></span><span className="home-action__arrow">→</span>
           </button>
         </section>
         <section className="home-profiles">
           <div className="home-section-title"><div><span className="home-kicker">CONFIGURATION FILES</span><h2>Available profiles</h2></div><span className="home-count">{loading ? "…" : `${profiles.length} profile${profiles.length === 1 ? "" : "s"}`}</span></div>
-          {error ? <div className="home-message home-message--error">Tidak dapat memuat profile: {error}</div> : null}
-          {loading ? <div className="home-message">Memuat configuration files…</div> : null}
-          {!loading && !error && profiles.length === 0 ? <div className="home-message">Belum ada profile. Buka editor untuk mulai.</div> : null}
+          {error ? <div className="home-message home-message--error">Unable to load profiles: {error}</div> : null}
+          {loading ? <div className="home-message">Loading configuration files…</div> : null}
+          {!loading && !error && profiles.length === 0 ? <div className="home-message">No profiles saved yet. Open the editor to get started.</div> : null}
           <div className="home-profile-list">
             {profiles.map((profile, index) => (
               <button key={profile.id} type="button" className={`home-profile ${profile.id === activeId ? "home-profile--active" : ""}`} onClick={() => selectProfile(profile.id)}>
@@ -100,7 +100,7 @@ export function Home({ onOpenDisplay, onOpenEditor }: HomeProps) {
         </section>
         <section className="home-support" aria-label="Support">
           <span className="home-kicker">PROJECT SUPPORT</span>
-          <p>Jika AC Display Unit membantu Anda, dukung pengembangannya.</p>
+          <p>If AC Display Unit is useful to you, support its development.</p>
           <a className="home-kofi-button" href="https://ko-fi.com/B4A12A78JD" target="_blank" rel="noreferrer">
             Support me on Ko-fi
           </a>

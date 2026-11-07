@@ -502,18 +502,18 @@ export function Editor() {
     if (!file || !profile) return;
     try {
       const parsed: unknown = JSON.parse(await file.text());
-      if (typeof parsed !== "object" || parsed === null || Array.isArray(parsed)) throw new Error("File harus berupa object JSON.");
+       if (typeof parsed !== "object" || parsed === null || Array.isArray(parsed)) throw new Error("The file must contain a JSON object.");
       const imported = parsed as Record<string, unknown>;
       if (!Array.isArray(imported.widgets) || !imported.widgets.every(isImportedWidget)) {
-        throw new Error("Format widgets tidak valid.");
+         throw new Error("Invalid widgets format.");
       }
       const importedWidgets = imported.widgets.filter(isImportedWidget);
       if (typeof imported.canvas !== "object" || imported.canvas === null || Array.isArray(imported.canvas)) {
-        throw new Error("Format canvas tidak valid.");
+         throw new Error("Invalid canvas format.");
       }
       const importedCanvas = imported.canvas as Record<string, unknown>;
       if (typeof importedCanvas.w !== "number" || typeof importedCanvas.h !== "number") {
-        throw new Error("Canvas harus memiliki w dan h.");
+         throw new Error("Canvas must contain w and h.");
       }
       const importedCanvasWidth = importedCanvas.w;
       const importedCanvasHeight = importedCanvas.h;
@@ -531,9 +531,9 @@ export function Editor() {
       } : current);
       setSelectedId(null);
       setSelectedElement(null);
-      setImportMessage(`Imported ${importedWidgets.length} widgets. Klik Save untuk menerapkan permanen.`);
+       setImportMessage(`Imported ${importedWidgets.length} widgets. Click Save to apply permanently.`);
     } catch (error) {
-      setImportMessage(error instanceof Error ? `Import gagal: ${error.message}` : "Import gagal: format file tidak valid.");
+       setImportMessage(error instanceof Error ? `Import failed: ${error.message}` : "Import failed: invalid file format.");
     } finally {
       if (importInputRef.current) importInputRef.current.value = "";
     }
@@ -609,7 +609,7 @@ export function Editor() {
               <div><span style={editorEyebrowStyle}>WIDGET LIBRARY</span><h2 id="add-widget-title" style={{ margin: "6px 0 0" }}>Add widget</h2></div>
               <button type="button" style={closeButtonStyle} onClick={() => setIsAddPickerOpen(false)} aria-label="Close">×</button>
             </div>
-            <p style={mutedStyle}>Pilih sumber data atau objek dari kartu. Setiap kartu sudah memasangkan data source dengan widget yang sesuai; detailnya tetap bisa disesuaikan setelah widget dipilih di canvas.</p>
+             <p style={mutedStyle}>Select a data source or object card. Each card pairs a telemetry source with a suitable widget; details can be adjusted after adding it to the canvas.</p>
             <div style={typeGridStyle}>
               {WIDGET_LIBRARY.map((preset) => (
                 <button
@@ -829,7 +829,7 @@ export function Editor() {
                       disabled={selectedPayload.useDefaultRedline !== false}
                       onChange={updateSelectedRpmRedline}
                     />
-                    <span style={fieldHintStyle}>Aktif saat Default dimatikan; 100% bar tercapai pada RPM ini.</span>
+                     <span style={fieldHintStyle}>Used when Default is disabled; the bar reaches 100% at this RPM.</span>
                   </label>
                   <label style={fieldStyle}>
                     Lower RPM limit
@@ -840,7 +840,7 @@ export function Editor() {
                       value={typeof selectedPayload.minRpm === "number" ? selectedPayload.minRpm : 0}
                       onChange={updateSelectedRpmMin}
                     />
-                    <span style={fieldHintStyle}>Lampu tetap mati sampai RPM melewati nilai ini.</span>
+                     <span style={fieldHintStyle}>The lights remain off until RPM exceeds this value.</span>
                   </label>
                 </>
               ) : null}
@@ -882,7 +882,7 @@ export function Editor() {
           </div>
           {saveState === "saved" ? <div style={successStyle}>Saved.</div> : null}
           {saveState === "error" ? <div style={errorStyle}>Save failed.</div> : null}
-          {importMessage ? <div style={importMessage.startsWith("Import gagal") ? errorStyle : successStyle}>{importMessage}</div> : null}
+           {importMessage ? <div style={importMessage.startsWith("Import failed") ? errorStyle : successStyle}>{importMessage}</div> : null}
         </aside>
       </div>
     </main>
