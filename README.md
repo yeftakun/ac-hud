@@ -9,6 +9,17 @@ It provides the Config API, telemetry SSE service, Assetto Corsa collector, CSP
 bridge, and the Windows production launcher. The backend production bundle
 builds this frontend and serves its `dist` output.
 
+## AC Display Unit v1.0.0
+
+AC Display Unit is developed and published by **Yefta Asyel** under the [MIT
+License](LICENSE).
+
+- Repository: <https://github.com/yeftakun/ac-hud>
+- Support: <yeftakun34@gmail.com>
+- Target: Windows x64
+- Assetto Corsa original with Content Manager and Custom Shaders Patch required;
+  tested with CSP `0.2.11`.
+
 ## Requirements
 
 - Node.js 20 or newer
