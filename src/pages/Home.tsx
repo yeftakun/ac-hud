@@ -51,11 +51,6 @@ export function Home({ onOpenDisplay, onOpenEditor }: HomeProps) {
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  function selectProfile(profileId: string) {
-    setActiveId(profileId);
-    localStorage.setItem(ACTIVE_PROFILE_KEY, profileId);
-  }
-
   function openDisplay() {
     localStorage.setItem(ACTIVE_PROFILE_KEY, activeId);
     onOpenDisplay();
@@ -66,44 +61,36 @@ export function Home({ onOpenDisplay, onOpenEditor }: HomeProps) {
   return (
     <main className="home-page">
       <header className="home-header">
-        <div className="home-brand"><span className="home-brand__mark">+</span><span>AC Display Unit</span></div>
+        <div className="home-brand"><img className="home-brand__logo" src="/logo.png" alt="" /><span>AC Display Unit</span></div>
         <div className="home-header__tools"><span className="home-header__status"><span className="home-status-dot" /> READY</span></div>
       </header>
       <section className="home-shell">
-        <div className="home-intro">
-          <div>
-            <p className="home-kicker">AC DISPLAY UNIT</p>
-            <h1>Choose an action</h1>
-            <p className="home-subtitle">Open the telemetry display or edit the widget layout.</p>
+        <section className="home-profile-readonly" aria-label="Loaded profile">
+          <div className="home-profile-readonly__body">
+            <span className="home-kicker">LOADED PROFILE</span>
+            <strong>{loading ? "Loading profile…" : activeProfile?.name ?? "No profile loaded"}</strong>
+            <small>{activeProfile?.id ?? (error ? "Unavailable" : "—")}</small>
           </div>
-        </div>
+          <span className={`home-profile-readonly__status${error ? " is-error" : ""}`}>
+            {loading ? "LOADING" : error ? "ERROR" : activeProfile ? "READY" : "NOT FOUND"}
+          </span>
+        </section>
+        {error ? <div className="home-message home-message--error">Unable to load profile: {error}</div> : null}
         <section className="home-actions" aria-label="Quick actions">
-          <button type="button" className="home-action home-action--display" onClick={openDisplay} disabled={loading || profiles.length === 0}>
-            <span className="home-action__icon">▶</span><span className="home-action__content"><strong>Open Display</strong><small>{activeProfile ? activeProfile.name : "Select a profile first"}</small></span><span className="home-action__arrow">→</span>
+          <button type="button" className="home-action home-action--display" onClick={openDisplay} disabled={loading || !activeProfile}>
+            <span className="home-action__icon">▶</span><span className="home-action__content"><strong>Open Display</strong><small>Launch the loaded telemetry layout</small></span><span className="home-action__arrow">→</span>
           </button>
           <button type="button" className="home-action" onClick={onOpenEditor}>
             <span className="home-action__icon">✎</span><span className="home-action__content"><strong>Open Editor</strong><small>Arrange widgets and edit their properties</small></span><span className="home-action__arrow">→</span>
           </button>
         </section>
-        <section className="home-profiles">
-          <div className="home-section-title"><div><span className="home-kicker">CONFIGURATION FILES</span><h2>Available profiles</h2></div><span className="home-count">{loading ? "…" : `${profiles.length} profile${profiles.length === 1 ? "" : "s"}`}</span></div>
-          {error ? <div className="home-message home-message--error">Unable to load profiles: {error}</div> : null}
-          {loading ? <div className="home-message">Loading configuration files…</div> : null}
-          {!loading && !error && profiles.length === 0 ? <div className="home-message">No profiles saved yet. Open the editor to get started.</div> : null}
-          <div className="home-profile-list">
-            {profiles.map((profile, index) => (
-              <button key={profile.id} type="button" className={`home-profile ${profile.id === activeId ? "home-profile--active" : ""}`} onClick={() => selectProfile(profile.id)}>
-                <span className="home-profile__number">{String(index + 1).padStart(2, "0")}</span><span className="home-profile__body"><strong>{profile.name}</strong><small>{profile.id}</small></span><span className="home-profile__state">{profile.id === activeId ? "ACTIVE" : "SELECT"}</span>
-              </button>
-            ))}
-          </div>
-        </section>
         <section className="home-support" aria-label="Support">
           <span className="home-kicker">PROJECT SUPPORT</span>
           <p>If AC Display Unit is useful to you, support its development.</p>
-          <a className="home-kofi-button" href="https://ko-fi.com/B4A12A78JD" target="_blank" rel="noreferrer">
-            Support me on Ko-fi
-          </a>
+          <div className="home-support-links">
+            <a className="home-kofi-button" href="https://ko-fi.com/B4A12A78JD" target="_blank" rel="noreferrer">Support me on Ko-fi</a>
+            <a className="home-trakteer-button" href="https://trakteer.id/yefta_asyel" target="_blank" rel="noreferrer">Support me on Trakteer</a>
+          </div>
         </section>
       </section>
       <footer className="home-footer"><span>AC Display Unit</span><span>Display · Editor</span></footer>
