@@ -1,15 +1,6 @@
 import { useEffect, useState } from "react";
 import { CONFIG_API_URL } from "../lib/configApi";
 
-declare global {
-  interface Window {
-    kofiwidget2?: {
-      init: (label: string, color: string, accountId: string) => void;
-      draw: () => void;
-    };
-  }
-}
-
 const ACTIVE_PROFILE_KEY = "ac-hud.active-profile";
 
 interface ProfileSummary { id: string; name: string; }
@@ -24,43 +15,40 @@ export function Home({ onOpenDisplay, onOpenEditor }: HomeProps) {
 
   useEffect(() => {
     const controller = new AbortController();
+    let mounted = true;
+    const timeoutId = window.setTimeout(() => controller.abort(), 5000);
+
     fetch(`${CONFIG_API_URL}/configs`, { signal: controller.signal })
       .then((response) => {
         if (!response.ok) throw new Error(`Config API returned ${response.status}`);
         return response.json() as Promise<ProfileSummary[]>;
       })
       .then((data) => {
+        if (!mounted) return;
         setProfiles(data);
         if (data.length > 0 && !data.some((profile) => profile.id === activeId)) setActiveId(data[0].id);
       })
       .catch((loadError) => {
-        if (loadError instanceof DOMException && loadError.name === "AbortError") return;
+        if (!mounted) return;
+        if (loadError instanceof DOMException && loadError.name === "AbortError") {
+          setError("Config server tidak merespons dalam 5 detik.");
+          return;
+        }
         setError(loadError instanceof Error ? loadError.message : "Failed to load profiles");
       })
-      .finally(() => { if (!controller.signal.aborted) setLoading(false); });
-    return () => controller.abort();
-  }, [activeId]);
+      .finally(() => {
+        window.clearTimeout(timeoutId);
+        if (mounted) setLoading(false);
+      });
 
-  useEffect(() => {
-    const scriptId = "kofi-widget-script";
-    const drawWidget = () => {
-      if (!window.kofiwidget2) return;
-      window.kofiwidget2.init("Support me on Ko-fi", "#72a4f2", "B4A12A78JD");
-      window.kofiwidget2.draw();
+    return () => {
+      mounted = false;
+      window.clearTimeout(timeoutId);
+      controller.abort();
     };
-
-    const existingScript = document.getElementById(scriptId);
-    if (existingScript) {
-      drawWidget();
-      return;
-    }
-
-    const script = document.createElement("script");
-    script.id = scriptId;
-    script.type = "text/javascript";
-    script.src = "https://storage.ko-fi.com/cdn/widget/Widget_2.js";
-    script.onload = drawWidget;
-    document.body.appendChild(script);
+  // The profile is selected after this initial list load; changing it must not
+  // restart the request or leave the home screen in a loading state.
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   function selectProfile(profileId: string) {
@@ -113,6 +101,9 @@ export function Home({ onOpenDisplay, onOpenEditor }: HomeProps) {
         <section className="home-support" aria-label="Support">
           <span className="home-kicker">PROJECT SUPPORT</span>
           <p>Jika AC Display Unit membantu Anda, dukung pengembangannya.</p>
+          <a className="home-kofi-button" href="https://ko-fi.com/B4A12A78JD" target="_blank" rel="noreferrer">
+            Support me on Ko-fi
+          </a>
         </section>
       </section>
       <footer className="home-footer"><span>AC Display Unit</span><span>Display · Editor</span></footer>
