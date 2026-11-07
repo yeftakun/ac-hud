@@ -25,7 +25,7 @@ function App() {
   if (path === "/display") return <Display />;
   if (path === "/editor") return <Editor />;
   if (path === "/data") return <Data />;
-  return <Home onOpenDisplay={() => navigate("/display")} onOpenEditor={() => navigate("/editor")} onOpenData={() => navigate("/data")} />;
+  return <Home onOpenDisplay={() => navigate("/display")} onOpenEditor={() => navigate("/editor")} />;
 }
 
 createRoot(document.getElementById("root")!).render(

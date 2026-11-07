@@ -1,13 +1,22 @@
 import { useEffect, useState } from "react";
 import { CONFIG_API_URL } from "../lib/configApi";
 
+declare global {
+  interface Window {
+    kofiwidget2?: {
+      init: (label: string, color: string, accountId: string) => void;
+      draw: () => void;
+    };
+  }
+}
+
 const ACTIVE_PROFILE_KEY = "ac-hud.active-profile";
 
 interface ProfileSummary { id: string; name: string; }
 
-interface HomeProps { onOpenDisplay: () => void; onOpenEditor: () => void; onOpenData: () => void; }
+interface HomeProps { onOpenDisplay: () => void; onOpenEditor: () => void; }
 
-export function Home({ onOpenDisplay, onOpenEditor, onOpenData }: HomeProps) {
+export function Home({ onOpenDisplay, onOpenEditor }: HomeProps) {
   const [profiles, setProfiles] = useState<ProfileSummary[]>([]);
   const [activeId, setActiveId] = useState(() => localStorage.getItem(ACTIVE_PROFILE_KEY) ?? "profile_001");
   const [loading, setLoading] = useState(true);
@@ -32,6 +41,28 @@ export function Home({ onOpenDisplay, onOpenEditor, onOpenData }: HomeProps) {
     return () => controller.abort();
   }, [activeId]);
 
+  useEffect(() => {
+    const scriptId = "kofi-widget-script";
+    const drawWidget = () => {
+      if (!window.kofiwidget2) return;
+      window.kofiwidget2.init("Support me on Ko-fi", "#72a4f2", "B4A12A78JD");
+      window.kofiwidget2.draw();
+    };
+
+    const existingScript = document.getElementById(scriptId);
+    if (existingScript) {
+      drawWidget();
+      return;
+    }
+
+    const script = document.createElement("script");
+    script.id = scriptId;
+    script.type = "text/javascript";
+    script.src = "https://storage.ko-fi.com/cdn/widget/Widget_2.js";
+    script.onload = drawWidget;
+    document.body.appendChild(script);
+  }, []);
+
   function selectProfile(profileId: string) {
     setActiveId(profileId);
     localStorage.setItem(ACTIVE_PROFILE_KEY, profileId);
@@ -47,17 +78,16 @@ export function Home({ onOpenDisplay, onOpenEditor, onOpenData }: HomeProps) {
   return (
     <main className="home-page">
       <header className="home-header">
-        <div className="home-brand"><span className="home-brand__mark">+</span><span>AC HUD</span></div>
-        <div className="home-header__tools"><button type="button" onClick={onOpenData}>Data test</button><span className="home-header__status"><span className="home-status-dot" /> LOCAL CONFIG MODE</span></div>
+        <div className="home-brand"><span className="home-brand__mark">+</span><span>AC Display Unit</span></div>
+        <div className="home-header__tools"><span className="home-header__status"><span className="home-status-dot" /> READY</span></div>
       </header>
       <section className="home-shell">
         <div className="home-intro">
           <div>
-            <p className="home-kicker">TELEMETRY DISPLAY SYSTEM</p>
-            <h1>Choose a workspace</h1>
-            <p className="home-subtitle">Pilih layout HUD untuk ditampilkan atau buka editor untuk mengubah posisi, ukuran, dan warna widget.</p>
+            <p className="home-kicker">AC DISPLAY UNIT</p>
+            <h1>Choose an action</h1>
+            <p className="home-subtitle">Buka tampilan telemetry atau ubah layout widget dari editor.</p>
           </div>
-          <div className="home-canvas-note"><span>CANVAS</span><strong>960 × 540</strong></div>
         </div>
         <section className="home-actions" aria-label="Quick actions">
           <button type="button" className="home-action home-action--display" onClick={openDisplay} disabled={loading || profiles.length === 0}>
@@ -80,8 +110,12 @@ export function Home({ onOpenDisplay, onOpenEditor, onOpenData }: HomeProps) {
             ))}
           </div>
         </section>
+        <section className="home-support" aria-label="Support">
+          <span className="home-kicker">PROJECT SUPPORT</span>
+          <p>Jika AC Display Unit membantu Anda, dukung pengembangannya.</p>
+        </section>
       </section>
-      <footer className="home-footer"><span>AC HUD</span><span>Display route: /display · Editor route: /editor</span></footer>
+      <footer className="home-footer"><span>AC Display Unit</span><span>Display · Editor</span></footer>
     </main>
   );
 }
