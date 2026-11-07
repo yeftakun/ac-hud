@@ -9,7 +9,7 @@ It provides the Config API, telemetry SSE service, Assetto Corsa collector, CSP
 bridge, and the Windows production launcher. The backend production bundle
 builds this frontend and serves its `dist` output.
 
-## AC Display Unit v1.0.0
+## AC Display Unit v1.0.1
 
 AC Display Unit is developed and published by **Yefta Asyel** under the [MIT
 License](LICENSE).

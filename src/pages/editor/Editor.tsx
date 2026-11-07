@@ -291,6 +291,7 @@ export function Editor() {
   const [loading, setLoading] = useState(true);
   const [loadError, setLoadError] = useState<string | null>(null);
   const [saveState, setSaveState] = useState<"idle" | "saving" | "saved" | "error">("idle");
+  const [saveError, setSaveError] = useState<string | null>(null);
   const [isAddPickerOpen, setIsAddPickerOpen] = useState(false);
   const [isGlobalPropertiesOpen, setIsGlobalPropertiesOpen] = useState(true);
   const [newWidgetPreset, setNewWidgetPreset] = useState<WidgetPreset>(WIDGET_LIBRARY[0]);
@@ -470,17 +471,28 @@ export function Editor() {
   async function saveProfile() {
     if (!profile) return;
     setSaveState("saving");
+    setSaveError(null);
     try {
       const response = await fetch(`${CONFIG_API_URL}/configs/${profile.id}`, {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(profile),
       });
-      if (!response.ok) throw new Error(`Config API returned ${response.status}`);
-      await response.json();
+      const responseText = await response.text();
+      if (!response.ok) {
+        let detail = responseText;
+        try {
+          const body = JSON.parse(responseText) as { error?: string };
+          detail = body.error ?? detail;
+        } catch {
+          // Keep the raw response when the server does not return JSON.
+        }
+        throw new Error(`Config API returned ${response.status}${detail ? `: ${detail}` : ""}`);
+      }
       setSaveState("saved");
-    } catch {
+    } catch (error) {
       setSaveState("error");
+      setSaveError(error instanceof Error ? error.message : "Unknown save error");
     }
   }
 
@@ -881,7 +893,7 @@ export function Editor() {
           )}
           </div>
           {saveState === "saved" ? <div style={successStyle}>Saved.</div> : null}
-          {saveState === "error" ? <div style={errorStyle}>Save failed.</div> : null}
+          {saveState === "error" ? <div style={errorStyle}>Save failed{saveError ? `: ${saveError}` : "."}</div> : null}
            {importMessage ? <div style={importMessage.startsWith("Import failed") ? errorStyle : successStyle}>{importMessage}</div> : null}
         </aside>
       </div>
