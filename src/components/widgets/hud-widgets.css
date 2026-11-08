@@ -220,6 +220,8 @@
   border: 3px solid var(--value-color, #ffffff);
   border-radius: 50%;
   opacity: 0.95;
+  transform: rotate(var(--steering-rotation, 0deg));
+  transition: transform 0.08s linear;
 }
 
 .steering-wheel__indicator {
@@ -231,9 +233,6 @@
   border-radius: 50%;
   background: #ff3b30;
   box-shadow: 0 0 10px #ff3b30;
-  transform-origin: 7px calc(50% + 48px);
-  transform: rotate(var(--steering-rotation, 0deg));
-  transition: transform 0.08s linear;
 }
 
 /* ---- G-force ---- */

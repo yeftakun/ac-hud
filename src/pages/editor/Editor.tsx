@@ -31,6 +31,10 @@ function isImportedWidget(value: unknown): value is WidgetConfig {
   );
 }
 
+function isRecord(value: unknown): value is Record<string, unknown> {
+  return typeof value === "object" && value !== null && !Array.isArray(value);
+}
+
 interface NumericFieldProps {
   value: number;
   min: number;
@@ -342,7 +346,7 @@ export function Editor() {
   }, [profile]);
 
   useEffect(() => {
-    function handleKeyDown(event: KeyboardEvent) {
+  function handleKeyDown(event: KeyboardEvent) {
       const target = event.target as HTMLElement | null;
       const isEditingText = target?.tagName === "INPUT" || target?.tagName === "TEXTAREA" || target?.tagName === "SELECT";
       const modifier = event.ctrlKey || event.metaKey;
@@ -363,11 +367,27 @@ export function Editor() {
         setSelectedElement(null);
         setSelectedId(null);
       }
+      if (selectedId && !isEditingText && ["ArrowUp", "ArrowDown", "ArrowLeft", "ArrowRight"].includes(event.key)) {
+        event.preventDefault();
+        const distance = event.shiftKey ? 10 : 1;
+        const delta = {
+          ArrowUp: { x: 0, y: -distance },
+          ArrowDown: { x: 0, y: distance },
+          ArrowLeft: { x: -distance, y: 0 },
+          ArrowRight: { x: distance, y: 0 },
+        }[event.key];
+        if (delta) {
+          updateWidget(selectedId, {
+            x: Math.max(0, Math.min((profile?.canvas.w ?? CANVAS_WIDTH) - (selectedWidget?.w ?? 0), (selectedWidget?.x ?? 0) + delta.x)),
+            y: Math.max(0, Math.min((profile?.canvas.h ?? CANVAS_HEIGHT) - (selectedWidget?.h ?? 0), (selectedWidget?.y ?? 0) + delta.y)),
+          });
+        }
+      }
     }
 
     window.addEventListener("keydown", handleKeyDown);
     return () => window.removeEventListener("keydown", handleKeyDown);
-  }, [canRedo, canUndo, redo, selectedId, undo]);
+  }, [canRedo, canUndo, profile, redo, selectedId, selectedWidget, undo]);
 
   function updateWidget(widgetId: string, patch: Partial<WidgetConfig>, transient = false) {
     const updateProfile = transient ? setTransient : setProfile;
@@ -435,6 +455,42 @@ export function Editor() {
     const zIndex = Number(value);
     if (!Number.isInteger(zIndex)) return;
     updateWidget(selectedWidget.id, { zIndex });
+  }
+
+  function updateSelectedDimension(key: "w" | "h", value: string) {
+    if (!selectedWidget) return;
+    const dimension = Number(value);
+    if (!Number.isFinite(dimension) || dimension < 20 || dimension > 4000) return;
+    const canvasLimit = key === "w" ? profile?.canvas.w ?? CANVAS_WIDTH : profile?.canvas.h ?? CANVAS_HEIGHT;
+    const position = key === "w" ? selectedWidget.x : selectedWidget.y;
+    updateWidget(selectedWidget.id, { [key]: Math.min(dimension, Math.max(20, canvasLimit - position)) });
+  }
+
+  function tyreThresholdsFor(widget: WidgetConfig): { cold: number; optimal: number; hot: number } {
+    const thresholds = widget.payload?.tempThresholds;
+    return {
+      cold: isRecord(thresholds) && typeof thresholds.cold === "number" ? thresholds.cold : 70,
+      optimal: isRecord(thresholds) && typeof thresholds.optimal === "number" ? thresholds.optimal : 95,
+      hot: isRecord(thresholds) && typeof thresholds.hot === "number" ? thresholds.hot : 110,
+    };
+  }
+
+  function updateSelectedTyreThreshold(key: "cold" | "optimal" | "hot", value: string) {
+    if (!selectedWidget || selectedWidget.type !== "tyres") return;
+    const nextValue = Number(value);
+    if (!Number.isFinite(nextValue)) return;
+    const current = tyreThresholdsFor(selectedWidget);
+    const next = { ...current, [key]: Math.max(0, nextValue) };
+    if (key === "cold") next.optimal = Math.max(next.optimal, next.cold);
+    if (key !== "hot") next.hot = Math.max(next.hot, next.optimal);
+    if (key === "optimal") next.cold = Math.min(next.cold, next.optimal);
+    if (key === "hot") {
+      next.optimal = Math.min(next.optimal, next.hot);
+      next.cold = Math.min(next.cold, next.optimal);
+    }
+    updateWidget(selectedWidget.id, {
+      payload: { ...selectedWidget.payload, tempThresholds: next },
+    });
   }
 
   function updateProfileName(value: string) {
@@ -802,6 +858,28 @@ export function Editor() {
                 </label>
               ) : null}
 
+              <div style={dimensionGridStyle}>
+                <label style={fieldStyle}>
+                  Width
+                  <NumericField
+                    min={20}
+                    max={profile.canvas.w}
+                    value={selectedWidget.w}
+                    onChange={(value) => updateSelectedDimension("w", value)}
+                  />
+                </label>
+                <label style={fieldStyle}>
+                  Height
+                  <NumericField
+                    min={20}
+                    max={profile.canvas.h}
+                    value={selectedWidget.h}
+                    onChange={(value) => updateSelectedDimension("h", value)}
+                  />
+                </label>
+              </div>
+              <div style={fieldHintStyle}>Use arrow keys to move the selected widget. Hold Shift for 10 px steps.</div>
+
               {selectedWidget.type === "gforce" ? (
                 <>
                   <label style={fieldStyle}>
@@ -856,6 +934,28 @@ export function Editor() {
                   </label>
                 </>
               ) : null}
+
+              {selectedWidget.type === "tyres" ? (() => {
+                const thresholds = tyreThresholdsFor(selectedWidget);
+                return (
+                  <div style={{ display: "grid", gap: 10, marginTop: 14 }}>
+                    <div style={{ fontWeight: 700 }}>Tyre temperature limits</div>
+                    <label style={fieldStyle}>
+                      Blue max (°C)
+                      <NumericField min={0} max={200} value={thresholds.cold} onChange={(value) => updateSelectedTyreThreshold("cold", value)} />
+                    </label>
+                    <label style={fieldStyle}>
+                      Green max (°C)
+                      <NumericField min={thresholds.cold} max={200} value={thresholds.optimal} onChange={(value) => updateSelectedTyreThreshold("optimal", value)} />
+                    </label>
+                    <label style={fieldStyle}>
+                      Yellow max (°C)
+                      <NumericField min={thresholds.optimal} max={200} value={thresholds.hot} onChange={(value) => updateSelectedTyreThreshold("hot", value)} />
+                    </label>
+                    <span style={fieldHintStyle}>Red starts above Yellow max. Each upper limit must be at least the limit below it.</span>
+                  </div>
+                );
+              })() : null}
 
               {defaultValueFontSize(selectedWidget.type) !== null ? (
                 <label style={fieldStyle}>

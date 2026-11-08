@@ -17,7 +17,9 @@ function clamp(value: number, min: number, max: number) {
 export function SteeringWheel({ value, maxInput = 1, style, className, mode = "display" }: SteeringWheelProps) {
   const numericValue = typeof value === "number" && Number.isFinite(value) ? value : null;
   const normalized = numericValue === null ? 0 : clamp(numericValue / maxInput, -1, 1);
-  const rotation = normalized * 135;
+  // AC's steering input represents the complete steering range. A 180 degree
+  // marker sweep makes left/right input visibly match the in-game wheel.
+  const rotation = normalized * 180;
   const cssVars = {
     "--box-bg": style?.boxBg ?? "#141820",
     "--box-border": style?.boxBorder ?? "#2a3340",

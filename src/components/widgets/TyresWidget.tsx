@@ -33,11 +33,12 @@ const DEFAULT_STYLE: Required<StatBoxStyle> = {
   valueColor: "#ffffff",
 };
 
-// Below cold = biru, cold–optimal = hijau, optimal–hot = kuning, di atas hot = merah.
+// cold/optimal/hot are the maximum temperatures for blue/green/yellow.
+// Red has no upper limit.
 function tyreColor(temp: number, t: TyreThresholds): string {
-  if (temp < t.cold) return "#2563eb";
-  if (temp < t.optimal) return "#16a34a";
-  if (temp < t.hot) return "#eab308";
+  if (temp <= t.cold) return "#2563eb";
+  if (temp <= t.optimal) return "#16a34a";
+  if (temp <= t.hot) return "#eab308";
   return "#dc2626";
 }
 
